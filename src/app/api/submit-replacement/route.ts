@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const subLabel = subscriptionType === "business" ? "Business Premium" : "Sales Navigator";
 
-    const message =
+    const telegramMessage =
       `🔔 *New LinkedIn Replacement Request*\n\n` +
       `📱 *WhatsApp:* \`${whatsapp}\`\n` +
       `📦 *Subscription:* ${subLabel}\n` +
@@ -19,54 +19,66 @@ export async function POST(req: NextRequest) {
       `📅 *Purchase Date:* ${purchaseDate}\n` +
       `📸 *Screenshot:* [View Image](${screenshotUrl})`;
 
-    const telegramUrl = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-
-    const telegramRes = await fetch(telegramUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: "Markdown",
-        disable_web_page_preview: false,
-      }),
-    });
-
-    if (!telegramRes.ok) {
-      const errData = await telegramRes.json();
-      console.error("Telegram API error:", errData);
-      return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
-    }
-
-    // Return success immediately, send WhatsApp in background (fire-and-forget)
+    // Build WhatsApp chatId
     const cleanedNumber = whatsapp.replace(/[\s\-\(\)\+]/g, "");
     const chatId = `${cleanedNumber}@c.us`;
     console.log("Sending WhatsApp to chatId:", chatId);
 
-    fetch(
-      `https://waapi.app/api/v1/instances/${process.env.WHATSAPP_INSTANCE_ID}/client/action/send-message`,
-      {
+    // Run Telegram + WhatsApp in parallel for speed
+    const [telegramResult, whatsappResult] = await Promise.allSettled([
+      // Telegram notification
+      fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chatId,
-          message:
-            "Dear Valued Customer,\n\n" +
-            "Thank you for submitting your replacement request. We have received it successfully. 🙏\n\n" +
-            "Our team is already working on processing your *LinkedIn Career Premium – 12 Months* replacement as quickly as possible.\n\n" +
-            "We truly appreciate your understanding and continued trust in us. We will keep you updated on the progress.\n\n" +
-            "Thank you for your patience and cooperation.\n\n" +
-            "Best regards,\n" +
-            "Team WebCodoo",
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: telegramMessage,
+          parse_mode: "Markdown",
+          disable_web_page_preview: false,
         }),
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => console.log("WhatsApp API response:", JSON.stringify(data)))
-      .catch((err) => console.error("WhatsApp send error:", err));
+      }),
+      // WhatsApp confirmation via WAAPI
+      fetch(
+        `https://waapi.app/api/v1/instances/${process.env.WHATSAPP_INSTANCE_ID}/client/action/send-message`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+          },
+          body: JSON.stringify({
+            chatId,
+            message:
+              "Dear Valued Customer,\n\n" +
+              "Thank you for submitting your replacement request. We have received it successfully. 🙏\n\n" +
+              "Our team is already working on processing your *LinkedIn Career Premium – 12 Months* replacement as quickly as possible.\n\n" +
+              "We truly appreciate your understanding and continued trust in us. We will keep you updated on the progress.\n\n" +
+              "Thank you for your patience and cooperation.\n\n" +
+              "Best regards,\n" +
+              "Team WebCodoo",
+          }),
+        }
+      ),
+    ]);
+
+    // Check Telegram result (critical)
+    if (telegramResult.status === "rejected") {
+      console.error("Telegram fetch failed:", telegramResult.reason);
+      return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
+    }
+    if (!telegramResult.value.ok) {
+      const errData = await telegramResult.value.json();
+      console.error("Telegram API error:", errData);
+      return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
+    }
+
+    // Log WhatsApp result (non-critical)
+    if (whatsappResult.status === "rejected") {
+      console.error("WhatsApp fetch failed:", whatsappResult.reason);
+    } else {
+      const waData = await whatsappResult.value.json();
+      console.log("WhatsApp API response:", JSON.stringify(waData));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
