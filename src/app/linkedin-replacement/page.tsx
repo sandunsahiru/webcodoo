@@ -102,12 +102,6 @@ export default function LinkedInReplacement() {
               Thank you for submitting your details. We&apos;ll send you new <span className="text-blue-400 font-medium">LinkedIn Career Premium</span> codes soon.
             </p>
 
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
-              <p className="text-yellow-500 text-sm font-medium">
-                Please wait for an email from us with your replacement code. Do not purchase any new subscription until you hear from us.
-              </p>
-            </div>
-
             <Link
               href="/"
               className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
@@ -176,11 +170,10 @@ export default function LinkedInReplacement() {
                   key={option.value}
                   type="button"
                   onClick={() => setFormData({ ...formData, subscriptionType: option.value })}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                    formData.subscriptionType === option.value
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${formData.subscriptionType === option.value
                       ? "border-blue-500 bg-blue-500/10 text-white"
                       : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{option.icon}</span>
                   <span className="font-medium text-sm">{option.label}</span>
@@ -223,11 +216,10 @@ export default function LinkedInReplacement() {
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className={`relative cursor-pointer border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                previewUrl
+              className={`relative cursor-pointer border-2 border-dashed rounded-xl p-6 text-center transition-colors ${previewUrl
                   ? "border-blue-500/50 bg-blue-500/5"
                   : "border-zinc-800 hover:border-zinc-700 bg-zinc-900/30"
-              }`}
+                }`}
             >
               <input
                 ref={fileInputRef}

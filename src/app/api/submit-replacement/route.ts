@@ -38,13 +38,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
     }
 
-    // Send WhatsApp confirmation message via WAAPI (best-effort)
+    // Send WhatsApp confirmation message via WAAPI (best-effort, errors ignored)
     try {
-      // Clean the phone number: remove spaces, dashes, parentheses, and leading +
       const cleanedNumber = whatsapp.replace(/[\s\-\(\)\+]/g, "");
       const chatId = `${cleanedNumber}@c.us`;
 
-      const waRes = await fetch(
+      await fetch(
         `https://waapi.app/api/v1/instances/${process.env.WHATSAPP_INSTANCE_ID}/client/action/send-message`,
         {
           method: "POST",
@@ -55,20 +54,18 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             chatId,
             message:
-              "Hello! 👋\n\n" +
-              "We have received your LinkedIn subscription replacement request.\n\n" +
-              "We are working on it and will provide you with a replacement as soon as possible.\n\n" +
-              "Thank you for your patience! 🙏",
+              "Dear Valued Customer,\n\n" +
+              "Thank you for submitting your replacement request. We have received it successfully. 🙏\n\n" +
+              "Our team is already working on processing your *LinkedIn Career Premium – 12 Months* replacement as quickly as possible.\n\n" +
+              "We truly appreciate your understanding and continued trust in us. We will keep you updated on the progress.\n\n" +
+              "Thank you for your patience and cooperation.\n\n" +
+              "Best regards,\n" +
+              "Team WebCodoo",
           }),
         }
       );
-
-      if (!waRes.ok) {
-        const waErr = await waRes.json();
-        console.error("WhatsApp API error:", waErr);
-      }
-    } catch (waError) {
-      console.error("WhatsApp send failed:", waError);
+    } catch {
+      // Silently ignore WhatsApp send errors
     }
 
     return NextResponse.json({ success: true });
