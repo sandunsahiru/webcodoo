@@ -38,35 +38,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to send notification" }, { status: 500 });
     }
 
-    // Send WhatsApp confirmation message via WAAPI (best-effort, errors ignored)
-    try {
-      const cleanedNumber = whatsapp.replace(/[\s\-\(\)\+]/g, "");
-      const chatId = `${cleanedNumber}@c.us`;
+    // Return success immediately, send WhatsApp in background (fire-and-forget)
+    const cleanedNumber = whatsapp.replace(/[\s\-\(\)\+]/g, "");
+    const chatId = `${cleanedNumber}@c.us`;
+    console.log("Sending WhatsApp to chatId:", chatId);
 
-      await fetch(
-        `https://waapi.app/api/v1/instances/${process.env.WHATSAPP_INSTANCE_ID}/client/action/send-message`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
-          },
-          body: JSON.stringify({
-            chatId,
-            message:
-              "Dear Valued Customer,\n\n" +
-              "Thank you for submitting your replacement request. We have received it successfully. 🙏\n\n" +
-              "Our team is already working on processing your *LinkedIn Career Premium – 12 Months* replacement as quickly as possible.\n\n" +
-              "We truly appreciate your understanding and continued trust in us. We will keep you updated on the progress.\n\n" +
-              "Thank you for your patience and cooperation.\n\n" +
-              "Best regards,\n" +
-              "Team WebCodoo",
-          }),
-        }
-      );
-    } catch {
-      // Silently ignore WhatsApp send errors
-    }
+    fetch(
+      `https://waapi.app/api/v1/instances/${process.env.WHATSAPP_INSTANCE_ID}/client/action/send-message`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+        },
+        body: JSON.stringify({
+          chatId,
+          message:
+            "Dear Valued Customer,\n\n" +
+            "Thank you for submitting your replacement request. We have received it successfully. 🙏\n\n" +
+            "Our team is already working on processing your *LinkedIn Career Premium – 12 Months* replacement as quickly as possible.\n\n" +
+            "We truly appreciate your understanding and continued trust in us. We will keep you updated on the progress.\n\n" +
+            "Thank you for your patience and cooperation.\n\n" +
+            "Best regards,\n" +
+            "Team WebCodoo",
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => console.log("WhatsApp API response:", JSON.stringify(data)))
+      .catch((err) => console.error("WhatsApp send error:", err));
 
     return NextResponse.json({ success: true });
   } catch (error) {
