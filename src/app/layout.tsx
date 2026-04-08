@@ -14,7 +14,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Webcodoo - Digital Tool Subscriptions",
-  description: "Premium digital tool subscriptions - ChatGPT, Grammarly, LinkedIn & more",
+  description: "Premium digital tool subscriptions for ChatGPT, Grammarly, and more. Coming soon!",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
