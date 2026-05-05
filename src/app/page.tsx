@@ -38,6 +38,34 @@ export default function Home() {
           Our website is currently under maintenance — stay connected for updates!
         </p>
 
+        {/* ChatGPT subscriber notice */}
+        <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-2xl p-5 mb-6 max-w-sm mx-auto text-left">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-yellow-500/15 rounded-lg flex items-center justify-center mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-yellow-400 text-xs font-semibold mb-1 uppercase tracking-wide">ChatGPT Subscribers</p>
+              <p className="text-zinc-400 text-xs leading-relaxed mb-3">
+                Some ChatGPT subscriptions have been deactivated. If yours is affected, submit a replacement request and we&apos;ll contact you.
+              </p>
+              <Link
+                href="/chatgpt-report"
+                className="inline-flex items-center gap-1.5 bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/25 text-yellow-400 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Submit Report
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Channel links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 max-w-sm mx-auto">
           <a
