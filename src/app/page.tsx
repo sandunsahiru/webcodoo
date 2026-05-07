@@ -38,30 +38,61 @@ export default function Home() {
           Our website is currently under maintenance — stay connected for updates!
         </p>
 
-        {/* ChatGPT subscriber notice */}
-        <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-2xl p-5 mb-6 max-w-sm mx-auto text-left">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-yellow-500/15 rounded-lg flex items-center justify-center mt-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <p className="text-yellow-400 text-xs font-semibold mb-1 uppercase tracking-wide">ChatGPT Subscribers</p>
-              <p className="text-zinc-400 text-xs leading-relaxed mb-3">
-                Some ChatGPT subscriptions have been deactivated. If yours is affected, submit a replacement request and we&apos;ll contact you.
-              </p>
-              <Link
-                href="/chatgpt-report"
-                className="inline-flex items-center gap-1.5 bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/25 text-yellow-400 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-              >
-                Submit Report
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6" />
+        {/* ChatGPT notices */}
+        <div className="space-y-3 mb-6 max-w-sm mx-auto">
+          {/* Replacement request notice */}
+          <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-2xl p-4 text-left">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-yellow-500/15 rounded-lg flex items-center justify-center mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-              </Link>
+              </div>
+              <div className="min-w-0">
+                <p className="text-yellow-400 text-xs font-semibold mb-1 uppercase tracking-wide">ChatGPT — Replacement Request</p>
+                <p className="text-zinc-400 text-xs leading-relaxed mb-3">
+                  Some ChatGPT subscriptions have been deactivated. If yours is affected and you&apos;d like a replacement account, submit here.
+                </p>
+                <Link
+                  href="/chatgpt-report"
+                  className="inline-flex items-center gap-1.5 bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/25 text-yellow-400 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Submit Replacement Request
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Service cancellation notice */}
+          <div className="bg-red-500/8 border border-red-500/20 rounded-2xl p-4 text-left">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-red-500/15 rounded-lg flex items-center justify-center mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-red-400 text-xs font-semibold mb-1 uppercase tracking-wide">ChatGPT — Service Cancelled</p>
+                <p className="text-zinc-400 text-xs leading-relaxed mb-3">
+                  If your ChatGPT service has been permanently cancelled, choose your preferred resolution — refund, alternative subscription, or Gemini Pro.
+                </p>
+                <Link
+                  href="/chatgpt-cancellation"
+                  className="inline-flex items-center gap-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/25 text-red-400 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Report Cancellation
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/sandu/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/114cd51e-d9b8-4d25-bfb2-5d6a61e391c4/c97df368-f956-4e25-9605-7834f78dc44f/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"D:\\\\UCSC\\\\UCSC UG Internship 2025_2026 - Monthly Progress Report.docx\" \"D:\\\\UCSC\\\\template_unpacked/\")",
+      "PowerShell(pandoc --version 2>&1)",
+      "Read(//mnt/**)",
+      "Read(//d//**)",
+      "Bash(node -e \"require\\('docx'\\); console.log\\('docx OK'\\);\")",
+      "Bash(npm list *)",
+      "Bash(mkdir -p /tmp/docgen)",
+      "Read(//tmp/**)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(node generate.js)",
+      "Bash(cygpath -w /tmp/docgen)",
+      "Bash(echo \"tmp path is: $\\(cygpath -w /tmp/docgen\\)\")",
+      "Bash(cygpath -w /tmp)",
+      "Read(//c/tmp/**)",
+      "Bash(cp /tmp/docgen/package.json /d/UCSC/package.json)",
+      "Bash(cp -r /tmp/docgen/node_modules /d/UCSC/node_modules)",
+      "Bash(rm /d/UCSC/generate.js /d/UCSC/package.json)",
+      "Bash(rm -rf /d/UCSC/node_modules)",
+      "Bash(sed 's/Monthly PR 0/Monthly PR NEW_0/g' generate.js)",
+      "Bash(node generate_new.js)",
+      "Bash(rm /d/UCSC/generate.js /d/UCSC/generate_new.js /d/UCSC/package.json)",
+      "Bash(node generate_final.js)",
+      "Bash(node generate_monthly.js)"
+    ]
+  }
+}
