@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import ProductRequest from '@/lib/models/ProductRequest'
 
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB()
+    const { id } = await params
+    const request = await ProductRequest.findByIdAndDelete(id)
+    if (!request) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete request' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

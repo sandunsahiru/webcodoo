@@ -17,6 +17,21 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB()
+    const { id } = await params
+    const concern = await Concern.findByIdAndDelete(id)
+    if (!concern) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete concern' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -20,13 +20,11 @@ export async function POST(
     const message =
       `Dear Customer,\n\n` +
       `We have reviewed your concern regarding your *${concern.productName}* subscription purchased on *${dateStr}*.\n\n` +
-      `We would like to process a *refund* of *Rs. ${concern.paidAmount.toLocaleString()}* for you. ` +
-      `To complete this, please reply with your bank payment details:\n\n` +
+      `We would like to process a *refund* for you. To complete this, please reply with your bank details:\n\n` +
       `🏦 *Bank Name:*\n` +
       `💳 *Account Number:*\n` +
       `👤 *Account Holder Name:*\n` +
-      `🏢 *Branch (if applicable):*\n\n` +
-      `_(Prefer a mobile payment? Just mention the method — FriMo, etc.)_\n\n` +
+      `🏢 *Branch:*\n\n` +
       `We will process your refund as soon as we receive your details.\n\n` +
       `Thank you for your patience.\n` +
       `— *Webcodoo Team*`
