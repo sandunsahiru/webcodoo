@@ -25,7 +25,12 @@
       "Bash(node generate_new.js)",
       "Bash(rm /d/UCSC/generate.js /d/UCSC/generate_new.js /d/UCSC/package.json)",
       "Bash(node generate_final.js)",
-      "Bash(node generate_monthly.js)"
+      "Bash(node generate_monthly.js)",
+      "Bash(Get-ChildItem -Recurse -Force)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Format-Table FullName)",
+      "Bash(awk '{print $NF}')",
+      "Bash(node -e \"require\\('mongoose'\\); console.log\\('mongoose OK'\\)\")"
     ]
   }
 }
