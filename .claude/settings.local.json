@@ -30,7 +30,8 @@
       "Bash(Select-Object -First 100)",
       "Bash(Format-Table FullName)",
       "Bash(awk '{print $NF}')",
-      "Bash(node -e \"require\\('mongoose'\\); console.log\\('mongoose OK'\\)\")"
+      "Bash(node -e \"require\\('mongoose'\\); console.log\\('mongoose OK'\\)\")",
+      "Bash(mkdir -p /d/webcodoo/src/app/products/[slug])"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Webcodoo - Digital Tool Subscriptions",
-  description: "Premium digital tool subscriptions for ChatGPT, Grammarly, and more. Coming soon!",
+  description:
+    "Premium digital tool subscriptions — Quillbot, StealthWriter, JetBrains, Figma, MS Office & more at the best prices in Sri Lanka.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -27,11 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
