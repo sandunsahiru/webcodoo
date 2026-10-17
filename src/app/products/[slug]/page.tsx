@@ -47,17 +47,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       className="min-h-screen overflow-x-hidden transition-colors duration-300"
       style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}
     >
-      {/* Background glows */}
+      {/* Background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full blur-[130px]" style={{ background: "var(--glow-1)" }} />
-        <div className="absolute bottom-[10%] right-[-8%] w-[400px] h-[400px] rounded-full blur-[100px]" style={{ background: "var(--glow-2)" }} />
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
+            backgroundImage: `radial-gradient(circle, var(--grid-color) 1.2px, transparent 1.2px)`,
+            backgroundSize: "28px 28px",
           }}
         />
+        <div className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full" style={{ background: "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-[10%] right-[-8%] w-[500px] h-[500px] rounded-full" style={{ background: "radial-gradient(circle, rgba(79,70,229,0.14) 0%, transparent 70%)" }} />
       </div>
 
       {/* Navbar */}
@@ -69,6 +69,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <Link href="/">
             <Image src="/logo.png" alt="Webcodoo" width={150} height={50} className="h-10 w-auto object-contain" />
           </Link>
+
+          {/* Nav links */}
+          <div className="hidden sm:flex items-center gap-1">
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Home
+            </Link>
+            <Link
+              href="/#products"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Shop
+            </Link>
+          </div>
+
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <a
