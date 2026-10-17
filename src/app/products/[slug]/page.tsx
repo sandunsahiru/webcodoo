@@ -105,8 +105,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
             >
               <div className="flex items-start gap-5 mb-5">
-                <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${product.color} flex items-center justify-center text-3xl sm:text-4xl shadow-xl flex-shrink-0`}>
-                  {product.icon}
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${product.color} blur-xl opacity-60 scale-90`} />
+                  <div className="relative w-full h-full rounded-2xl overflow-hidden bg-white shadow-xl flex items-center justify-center p-2.5">
+                    {product.logoUrl ? (
+                      <img src={product.logoUrl} alt={product.name} className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-3xl sm:text-4xl">{product.icon}</span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   {product.badge && (
@@ -278,8 +285,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   className="hover-subcard group rounded-2xl p-4"
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center text-xl mb-3`}>
-                    {p.icon}
+                  <div className="relative w-10 h-10 mb-3 flex-shrink-0">
+                    <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${p.color} blur-md opacity-50 scale-90`} />
+                    <div className="relative w-full h-full rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center p-1.5">
+                      {p.logoUrl ? (
+                        <img src={p.logoUrl} alt={p.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="text-lg">{p.icon}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="font-semibold text-sm group-hover:text-violet-600 transition-colors" style={{ color: "var(--text-primary)" }}>
                     {p.name}

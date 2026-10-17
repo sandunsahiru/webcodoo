@@ -8,7 +8,8 @@ export interface Product {
   slug: string;
   name: string;
   tagline: string;
-  icon: string; // emoji or icon key
+  icon: string; // emoji fallback
+  logoUrl?: string; // real brand logo URL
   category: string;
   startingPrice: number;
   duration: string;
@@ -28,6 +29,7 @@ export const products: Product[] = [
     name: "StealthWriter AI",
     tagline: "AI-powered undetectable writing",
     icon: "✍️",
+    logoUrl: "https://logo.clearbit.com/stealthwriter.ai",
     category: "AI Writing",
     startingPrice: 2500,
     duration: "1 Month",
@@ -58,6 +60,7 @@ export const products: Product[] = [
     name: "Quillbot Premium",
     tagline: "AI paraphrasing & humanizing",
     icon: "🖊️",
+    logoUrl: "https://logo.clearbit.com/quillbot.com",
     category: "AI Writing",
     startingPrice: 400,
     duration: "1 Month",
@@ -86,6 +89,7 @@ export const products: Product[] = [
     name: "CapCut Pro",
     tagline: "Professional video editing suite",
     icon: "🎬",
+    logoUrl: "https://logo.clearbit.com/capcut.com",
     category: "Creative",
     startingPrice: 1000,
     duration: "1 Month",
@@ -107,6 +111,7 @@ export const products: Product[] = [
     name: "JetBrains Edu",
     tagline: "Full IDE suite for developers",
     icon: "💻",
+    logoUrl: "https://cdn.simpleicons.org/jetbrains",
     category: "Development",
     startingPrice: 2500,
     duration: "1 Year",
@@ -128,6 +133,7 @@ export const products: Product[] = [
     name: "Figma Edu",
     tagline: "Professional UI/UX design tool",
     icon: "🎨",
+    logoUrl: "https://cdn.simpleicons.org/figma",
     category: "Design",
     startingPrice: 3000,
     duration: "2 Years",
@@ -151,6 +157,7 @@ export const products: Product[] = [
     name: "AI & Plagiarism Checker",
     tagline: "Official Turnitin reports",
     icon: "🔍",
+    logoUrl: "https://logo.clearbit.com/turnitin.com",
     category: "Academic",
     startingPrice: 400,
     duration: "Per Document",
@@ -174,6 +181,7 @@ export const products: Product[] = [
     name: "Gemini AI Pro",
     tagline: "Google's most capable AI model",
     icon: "✨",
+    logoUrl: "https://cdn.simpleicons.org/googlegemini",
     category: "AI Tools",
     startingPrice: 850,
     duration: "18 Months",
@@ -198,6 +206,7 @@ export const products: Product[] = [
     name: "Duolingo Super",
     tagline: "Learn languages without limits",
     icon: "🦉",
+    logoUrl: "https://cdn.simpleicons.org/duolingo",
     category: "Education",
     startingPrice: 1500,
     duration: "1 Year",
@@ -219,6 +228,7 @@ export const products: Product[] = [
     name: "edX",
     tagline: "World-class online courses",
     icon: "🎓",
+    logoUrl: "https://cdn.simpleicons.org/edx",
     category: "Education",
     startingPrice: 2000,
     duration: "1 Year",
@@ -240,6 +250,7 @@ export const products: Product[] = [
     name: "iLovePDF",
     tagline: "Complete PDF toolkit online",
     icon: "📄",
+    logoUrl: "https://logo.clearbit.com/ilovepdf.com",
     category: "Productivity",
     startingPrice: 1000,
     duration: "1 Year",
@@ -261,6 +272,7 @@ export const products: Product[] = [
     name: "MS Office 365",
     tagline: "Full Microsoft productivity suite",
     icon: "🪟",
+    logoUrl: "https://cdn.simpleicons.org/microsoftoffice",
     category: "Productivity",
     startingPrice: 1250,
     duration: "1 Year",

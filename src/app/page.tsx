@@ -256,17 +256,39 @@ export default function Home() {
               )}
 
               {/* Icon */}
-              <div
-                className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${product.color} flex items-center justify-center text-2xl shadow-lg`}
-              >
-                {product.icon}
+              <div className="flex items-center gap-3 mb-1">
+                <div className="relative w-[52px] h-[52px] flex-shrink-0">
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${product.color} blur-lg opacity-60`} />
+                  <div className="relative w-full h-full rounded-2xl flex items-center justify-center p-2.5"
+                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                    {product.logoUrl ? (
+                      <>
+                        <img
+                          src={product.logoUrl}
+                          alt={product.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            img.style.display = "none";
+                            const fallback = img.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <span className="text-xl hidden items-center justify-center w-full h-full">{product.icon}</span>
+                      </>
+                    ) : (
+                      <span className="text-xl">{product.icon}</span>
+                    )}
+                  </div>
+                </div>
+                {/* Category beside icon */}
+                <div className="text-[10px] font-bold uppercase tracking-widest text-violet-500">
+                  {product.category}
+                </div>
               </div>
 
               {/* Info */}
               <div className="flex-1">
-                <div className="text-[11px] font-semibold uppercase tracking-widest mb-1 text-violet-600">
-                  {product.category}
-                </div>
                 <h3
                   className="font-bold text-base leading-snug mb-1 transition-colors group-hover:text-violet-600"
                   style={{ color: "var(--text-primary)" }}
