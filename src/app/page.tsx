@@ -46,26 +46,42 @@ export default function Home() {
       className="min-h-screen overflow-x-hidden transition-colors duration-300"
       style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}
     >
-      {/* ── Animated background glows ─────────────────────────────── */}
+      {/* ── Background ─────────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div
-          className="absolute top-[-15%] left-[-8%] w-[600px] h-[600px] rounded-full blur-[130px] animate-pulse"
-          style={{ background: "var(--glow-1)" }}
-        />
-        <div
-          className="absolute top-[35%] right-[-8%] w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse delay-700"
-          style={{ background: "var(--glow-2)" }}
-        />
-        <div
-          className="absolute bottom-[-5%] left-[35%] w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse delay-1400"
-          style={{ background: "var(--glow-3)" }}
-        />
-        {/* Grid */}
+        {/* Dot grid */}
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
+            backgroundImage: `radial-gradient(circle, var(--grid-color) 1.2px, transparent 1.2px)`,
+            backgroundSize: "28px 28px",
+          }}
+        />
+        {/* Radial glow — top-left */}
+        <div
+          className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)",
+          }}
+        />
+        {/* Radial glow — center-right */}
+        <div
+          className="absolute top-[30%] right-[-12%] w-[600px] h-[600px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(79,70,229,0.14) 0%, transparent 70%)",
+          }}
+        />
+        {/* Radial glow — bottom-center */}
+        <div
+          className="absolute bottom-[-10%] left-[25%] w-[500px] h-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)",
+          }}
+        />
+        {/* Diagonal accent stripe */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(135deg, rgba(124,58,237,0.03) 0%, transparent 50%, rgba(79,70,229,0.04) 100%)",
           }}
         />
       </div>
@@ -106,22 +122,6 @@ export default function Home() {
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section className="relative z-10 pt-20 pb-16 px-4 text-center">
-        {/* Badge */}
-        <div
-          className="inline-flex items-center gap-2 text-xs font-medium px-4 py-1.5 rounded-full mb-6"
-          style={{
-            background: "rgba(124,58,237,0.1)",
-            border: "1px solid rgba(124,58,237,0.2)",
-            color: "#7c3aed",
-          }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full animate-ping inline-block"
-            style={{ background: "#7c3aed" }}
-          />
-          Premium Digital Subscriptions · Sri Lanka
-        </div>
-
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4">
           <span>Get Premium</span>
@@ -257,15 +257,13 @@ export default function Home() {
 
               {/* ── Logo area (top section of card) ── */}
               <div
-                className={`relative h-[130px] sm:h-[150px] flex items-center justify-center bg-gradient-to-br ${product.color} overflow-hidden`}
+                className={`relative h-[140px] sm:h-[160px] flex items-center justify-center bg-gradient-to-br ${product.color} overflow-hidden`}
               >
-                {/* Subtle blur overlay for depth */}
-                <div className="absolute inset-0 bg-white/10" />
                 {product.logoUrl ? (
                   <img
                     src={product.logoUrl}
                     alt={product.name}
-                    className="relative z-10 max-h-[90px] max-w-[75%] object-contain"
+                    className="relative z-10 w-full h-full object-contain p-4"
                     style={{ mixBlendMode: "multiply" }}
                     onError={(e) => {
                       const img = e.currentTarget;
