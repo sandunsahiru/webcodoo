@@ -20,7 +20,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-const WaIcon = () => (
+const WaIconSm = () => (
+  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+const WaIconMd = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
   </svg>
@@ -41,16 +47,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       className="min-h-screen overflow-x-hidden transition-colors duration-300"
       style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}
     >
-      {/* Background */}
+      {/* Background glows */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div
-          className="absolute top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full blur-[130px]"
-          style={{ background: "var(--glow-1)" }}
-        />
-        <div
-          className="absolute bottom-[10%] right-[-8%] w-[400px] h-[400px] rounded-full blur-[100px]"
-          style={{ background: "var(--glow-2)" }}
-        />
+        <div className="absolute top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full blur-[130px]" style={{ background: "var(--glow-1)" }} />
+        <div className="absolute bottom-[10%] right-[-8%] w-[400px] h-[400px] rounded-full blur-[100px]" style={{ background: "var(--glow-2)" }} />
         <div
           className="absolute inset-0"
           style={{
@@ -75,12 +75,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1fb85a] text-white text-sm font-semibold px-4 py-2 rounded-full transition-all hover:scale-105"
+              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1fb85a] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors"
               style={{ boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
+              <WaIconSm />
               Buy Now
             </a>
           </div>
@@ -163,10 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {/* Access method */}
             <div
               className="rounded-3xl p-6"
-              style={{
-                background: "rgba(59,130,246,0.05)",
-                border: "1px solid rgba(59,130,246,0.15)",
-              }}
+              style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}
             >
               <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <span>🔑</span> How You Get Access
@@ -216,30 +211,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer group"
+                    className="hover-plan flex items-center justify-between p-4 rounded-2xl"
                     style={
                       plan.highlight
-                        ? {
-                            background: "rgba(124,58,237,0.08)",
-                            border: "1px solid rgba(124,58,237,0.3)",
-                          }
-                        : {
-                            background: "var(--bg-input)",
-                            border: "1px solid var(--border)",
-                          }
+                        ? { background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)" }
+                        : { background: "var(--bg-input)", border: "1px solid var(--border)" }
                     }
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.5)";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = plan.highlight
-                        ? "rgba(124,58,237,0.3)"
-                        : "var(--border)";
-                      (e.currentTarget as HTMLElement).style.background = plan.highlight
-                        ? "rgba(124,58,237,0.08)"
-                        : "var(--bg-input)";
-                    }}
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
@@ -256,9 +233,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     </div>
                     <div className="text-right">
                       <div className="font-extrabold text-violet-600">Rs. {plan.price.toLocaleString()}</div>
-                      <div className="text-[10px] transition-colors" style={{ color: "var(--text-muted)" }}>
-                        Tap to order →
-                      </div>
+                      <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Tap to order →</div>
                     </div>
                   </a>
                 ))}
@@ -269,15 +244,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full text-white font-bold py-4 rounded-2xl text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  background: "#25D366",
-                  boxShadow: "0 8px 24px rgba(37,211,102,0.3)",
-                }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1fb85a")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#25D366")}
+                className="flex items-center justify-center gap-3 w-full bg-[#25D366] hover:bg-[#1fb85a] text-white font-bold py-4 rounded-2xl text-base transition-colors"
+                style={{ boxShadow: "0 8px 24px rgba(37,211,102,0.3)" }}
               >
-                <WaIcon />
+                <WaIconMd />
                 Buy Now on WhatsApp
               </a>
 
@@ -285,11 +255,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 Fast delivery · Secure · Trusted
               </p>
 
-              {/* Trust badges */}
-              <div
-                className="flex justify-center gap-4 mt-5 pt-5"
-                style={{ borderTop: "1px solid var(--border)" }}
-              >
+              <div className="flex justify-center gap-4 mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
                 {["⚡ Instant", "🔒 Safe", "💬 Support"].map((b) => (
                   <div key={b} className="text-xs" style={{ color: "var(--text-muted)" }}>{b}</div>
                 ))}
@@ -309,10 +275,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <Link
                   key={p.slug}
                   href={`/products/${p.slug}`}
-                  className="group rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+                  className="hover-subcard group rounded-2xl p-4"
                   style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)"}
-                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"}
                 >
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center text-xl mb-3`}>
                     {p.icon}
@@ -330,10 +294,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {/* Footer */}
-      <footer
-        className="relative z-10 py-8 px-4 text-center mt-10"
-        style={{ borderTop: "1px solid var(--border)" }}
-      >
+      <footer className="relative z-10 py-8 px-4 text-center mt-10" style={{ borderTop: "1px solid var(--border)" }}>
         <Image src="/logo.png" alt="Webcodoo" width={120} height={40} className="h-8 w-auto object-contain mx-auto mb-3 opacity-60" />
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           © {new Date().getFullYear()} Webcodoo · Premium Digital Subscriptions · Sri Lanka
