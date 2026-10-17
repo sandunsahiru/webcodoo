@@ -225,12 +225,12 @@ export default function Home() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {filtered.map((product) => (
             <Link
               key={product.slug}
               href={`/products/${product.slug}`}
-              className="group relative flex flex-col gap-4 rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 hover:-translate-y-1"
               style={{
                 background: "var(--bg-card)",
                 border: "1px solid var(--border)",
@@ -248,83 +248,76 @@ export default function Home() {
               {/* Badge */}
               {product.badge && (
                 <span
-                  className="absolute top-4 right-4 text-white text-[10px] font-bold px-2.5 py-1 rounded-full"
+                  className="absolute top-3 right-3 z-10 text-white text-[9px] font-bold px-2 py-0.5 rounded-full"
                   style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
                 >
                   {product.badge}
                 </span>
               )}
 
-              {/* Icon */}
-              <div className="flex items-center gap-3 mb-1">
-                <div className="relative w-[52px] h-[52px] flex-shrink-0">
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${product.color} blur-lg opacity-60`} />
-                  <div className="relative w-full h-full rounded-2xl flex items-center justify-center p-2.5"
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}>
-                    {product.logoUrl ? (
-                      <>
-                        <img
-                          src={product.logoUrl}
-                          alt={product.name}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const img = e.currentTarget;
-                            img.style.display = "none";
-                            const fallback = img.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = "flex";
-                          }}
-                        />
-                        <span className="text-xl hidden items-center justify-center w-full h-full">{product.icon}</span>
-                      </>
-                    ) : (
-                      <span className="text-xl">{product.icon}</span>
-                    )}
-                  </div>
-                </div>
-                {/* Category beside icon */}
+              {/* ── Logo area (top section of card) ── */}
+              <div
+                className={`relative h-[130px] sm:h-[150px] flex items-center justify-center bg-gradient-to-br ${product.color} overflow-hidden`}
+              >
+                {/* Subtle blur overlay for depth */}
+                <div className="absolute inset-0 bg-white/10" />
+                {product.logoUrl ? (
+                  <img
+                    src={product.logoUrl}
+                    alt={product.name}
+                    className="relative z-10 max-h-[90px] max-w-[75%] object-contain"
+                    style={{ mixBlendMode: "multiply" }}
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      img.style.display = "none";
+                      const fb = img.nextElementSibling as HTMLElement;
+                      if (fb) fb.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <span
+                  className="text-5xl relative z-10"
+                  style={{ display: product.logoUrl ? "none" : "block" }}
+                >
+                  {product.icon}
+                </span>
+              </div>
+
+              {/* ── Card body ── */}
+              <div className="flex flex-col gap-2.5 p-4 flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-violet-500">
                   {product.category}
                 </div>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1">
                 <h3
-                  className="font-bold text-base leading-snug mb-1 transition-colors group-hover:text-violet-600"
+                  className="font-bold text-sm sm:text-base leading-snug transition-colors group-hover:text-violet-600"
                   style={{ color: "var(--text-primary)" }}
                 >
                   {product.name}
                 </h3>
-                <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
                   {product.tagline}
                 </p>
-              </div>
 
-              {/* Price row */}
-              <div
-                className="flex items-end justify-between pt-3"
-                style={{ borderTop: "1px solid var(--border)" }}
-              >
-                <div>
-                  <div className="text-[10px] mb-0.5" style={{ color: "var(--text-muted)" }}>Starting from</div>
-                  <div className="text-xl font-extrabold" style={{ color: "var(--text-primary)" }}>
-                    Rs. {product.startingPrice.toLocaleString()}
-                  </div>
-                  <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
-                </div>
+                {/* Price row */}
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all group-hover:scale-110"
-                  style={{
-                    background: "rgba(124,58,237,0.1)",
-                    border: "1px solid rgba(124,58,237,0.2)",
-                  }}
+                  className="flex items-end justify-between pt-2 mt-auto"
+                  style={{ borderTop: "1px solid var(--border)" }}
                 >
-                  <svg
-                    className="w-4 h-4 text-violet-600"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                  <div>
+                    <div className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>Starting from</div>
+                    <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
+                      Rs. {product.startingPrice.toLocaleString()}
+                    </div>
+                    <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
+                  </div>
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all group-hover:scale-110"
+                    style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                    <svg className="w-3.5 h-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </Link>

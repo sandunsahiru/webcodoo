@@ -105,15 +105,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
             >
               <div className="flex items-start gap-5 mb-5">
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${product.color} blur-xl opacity-60 scale-90`} />
-                  <div className="relative w-full h-full rounded-2xl overflow-hidden bg-white shadow-xl flex items-center justify-center p-2.5">
-                    {product.logoUrl ? (
-                      <img src={product.logoUrl} alt={product.name} className="w-full h-full object-contain" />
-                    ) : (
-                      <span className="text-3xl sm:text-4xl">{product.icon}</span>
-                    )}
-                  </div>
+                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${product.color} flex items-center justify-center overflow-hidden shadow-xl flex-shrink-0 p-3`}>
+                  {product.logoUrl ? (
+                    <img src={product.logoUrl} alt={product.name} className="w-full h-full object-contain drop-shadow" />
+                  ) : (
+                    <span className="text-4xl">{product.icon}</span>
+                  )}
                 </div>
                 <div>
                   {product.badge && (
