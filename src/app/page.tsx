@@ -80,33 +80,15 @@ const WaIcon = () => (
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<DisplayProduct[]>(() => buildDisplayProducts(
-    staticProducts.map(p => ({ _id: p.slug, slug: p.slug, name: p.name, description: p.description, image: p.logoUrl, variations: p.plans.map(pl => ({ label: pl.label, price: pl.price })) }))
-  ));
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
 
   useEffect(() => {
     fetch("/api/products/public")
       .then((r) => r.json())
       .then((dbData: DbProduct[]) => {
-        if (!Array.isArray(dbData)) return;
-
-        // Keep all static products (merged with DB pricing where available)
-        const merged: DisplayProduct[] = staticProducts.map((stat) => {
-          const db = dbData.find((d) => d.slug === stat.slug);
-          return buildDisplayProducts([
-            db ?? { _id: stat.slug, slug: stat.slug, name: stat.name, description: stat.description, image: stat.logoUrl, variations: stat.plans.map((pl) => ({ label: pl.label, price: pl.price })) },
-          ])[0];
-        });
-
-        // Append DB-only products (not in static list) that have showOnWebsite
-        const staticSlugs = new Set(staticProducts.map((p) => p.slug));
-        for (const db of dbData) {
-          if (!staticSlugs.has(db.slug)) {
-            merged.push(buildDisplayProducts([db])[0]);
-          }
+        if (Array.isArray(dbData)) {
+          setProducts(buildDisplayProducts(dbData));
         }
-
-        setProducts(merged);
       })
       .catch(() => {});
   }, []);
