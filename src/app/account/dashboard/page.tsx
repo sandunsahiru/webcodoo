@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+
+export const dynamic = "force-dynamic";
 import DashboardClient from "./DashboardClient";
 
 interface OrderItem {
@@ -39,7 +41,7 @@ async function getOrders(phone: string): Promise<OrderRow[]> {
       _id: doc._id.toString(),
       orderId: doc.orderId ?? doc.order_id ?? "—",
       status: doc.status ?? "pending_payment",
-      totalAmount: doc.totalAmount ?? doc.total_amount ?? 0,
+      totalAmount: doc.totalAmount ?? doc.total ?? doc.total_amount ?? 0,
       items: (doc.items ?? []).map((it: OrderItem) => ({
         productName: it.productName ?? "",
         planLabel: it.planLabel ?? "",
