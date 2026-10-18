@@ -6,7 +6,7 @@ import { useState } from "react";
 import { products } from "@/lib/products";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CartNavButton } from "@/components/CartNavButton";
-import { useCart } from "@/contexts/CartContext";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 const WA_NUMBER = "94702947854";
 const WA_LINK = `https://wa.me/${WA_NUMBER}`;
@@ -34,8 +34,6 @@ const WaIcon = () => (
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
-  const { addItem } = useCart();
-
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === "All" || p.category === activeCategory;
     const matchSearch =
@@ -429,19 +427,14 @@ export default function Home() {
                       </svg>
                     </Link>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      addItem({ productSlug: product.slug, productName: product.name, planLabel: product.duration, price: product.startingPrice });
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#7c3aed" }}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13l-.4-2M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
-                    </svg>
-                    Add to Cart
-                  </button>
+                  <div onClick={(e) => e.preventDefault()}>
+                    <AddToCartButton
+                      productSlug={product.slug}
+                      productName={product.name}
+                      planLabel={product.duration}
+                      price={product.startingPrice}
+                    />
+                  </div>
                 </div>
               </div>
             </Link>
