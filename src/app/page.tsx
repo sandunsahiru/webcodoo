@@ -121,6 +121,13 @@ export default function Home() {
             >
               Shop
             </Link>
+            <Link
+              href="/account"
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              My Account
+            </Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
