@@ -87,10 +87,26 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/products/public")
       .then((r) => r.json())
-      .then((data: DbProduct[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(buildDisplayProducts(data));
+      .then((dbData: DbProduct[]) => {
+        if (!Array.isArray(dbData)) return;
+
+        // Keep all static products (merged with DB pricing where available)
+        const merged: DisplayProduct[] = staticProducts.map((stat) => {
+          const db = dbData.find((d) => d.slug === stat.slug);
+          return buildDisplayProducts([
+            db ?? { _id: stat.slug, slug: stat.slug, name: stat.name, description: stat.description, image: stat.logoUrl, variations: stat.plans.map((pl) => ({ label: pl.label, price: pl.price })) },
+          ])[0];
+        });
+
+        // Append DB-only products (not in static list) that have showOnWebsite
+        const staticSlugs = new Set(staticProducts.map((p) => p.slug));
+        for (const db of dbData) {
+          if (!staticSlugs.has(db.slug)) {
+            merged.push(buildDisplayProducts([db])[0]);
+          }
         }
+
+        setProducts(merged);
       })
       .catch(() => {});
   }, []);
