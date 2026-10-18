@@ -5,10 +5,8 @@ import { sendTelegramMessage } from "@/lib/telegram";
 import { ObjectId } from "mongodb";
 
 function genOrderId(): string {
-  const d = new Date();
-  const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const rand = Math.floor(1000 + Math.random() * 9000);
-  return `WCD-${date}-${rand}`;
+  return `WCD-${rand}`;
 }
 
 export async function POST(req: NextRequest) {

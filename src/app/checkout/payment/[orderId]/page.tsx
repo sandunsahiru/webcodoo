@@ -221,7 +221,7 @@ export default function PaymentPage() {
             {/* Warning */}
             <div className="p-3.5 rounded-xl text-xs font-medium leading-relaxed"
               style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.3)", color: "#78350f" }}>
-              🔔 <strong>Important:</strong> Include <strong className="font-extrabold">{order.orderId}</strong> in the bank transfer description/reference. This helps us match your payment instantly!
+              🔔 <strong>Important:</strong> Type <strong className="font-extrabold tracking-widest">{order.orderId}</strong> as the bank transfer description so we can match your payment.
             </div>
           </div>
         </div>

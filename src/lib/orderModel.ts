@@ -5,6 +5,7 @@ export interface IOrderItem {
   productName: string;
   planLabel: string;
   price: number;
+  qty: number;
 }
 
 export interface IOrder extends Document {
@@ -24,6 +25,7 @@ const OrderItemSchema = new Schema<IOrderItem>({
   productName: String,
   planLabel: String,
   price: Number,
+  qty: { type: Number, default: 1 },
 });
 
 const OrderSchema = new Schema<IOrder>(
