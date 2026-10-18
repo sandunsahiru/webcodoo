@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/lib/orderModel";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { ObjectId } from "mongodb";
 
 function genOrderId(): string {
   const rand = Math.floor(1000 + Math.random() * 9000);
@@ -84,18 +83,13 @@ export async function POST(req: NextRequest) {
     const total = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * (i.qty ?? 1), 0);
     const orderId = genOrderId();
 
-    const order = await Order.create({ orderId, phone: normalizedPhone, name, notes, items, total, posCustomerId, status: "pending_payment" });
-
-    // Mirror order to POS + register new customer if not in POS
+    // Register new customer in POS customers collection if needed
+    let resolvedCustomerId = posCustomerId;
     try {
       const conn = await connectDB();
       const db = conn.connection.db!;
-
-      let resolvedCustomerId = posCustomerId;
-
-      // New customer — add to POS customers collection
       if (!posCustomerId) {
-        const newCustomer = {
+        const result = await db.collection("customers").insertOne({
           name,
           customer_name: name,
           phone: normalizedPhone,
@@ -103,40 +97,36 @@ export async function POST(req: NextRequest) {
           source: "webcodoo",
           createdAt: new Date(),
           updatedAt: new Date(),
-        };
-        const result = await db.collection("customers").insertOne(newCustomer);
+        });
         resolvedCustomerId = result.insertedId.toString();
       }
-
-      const posOrder: Record<string, unknown> = {
-        orderId,
-        source: "webcodoo",
-        phone: normalizedPhone,
-        customer_name: name,
-        name,
-        notes: notes ?? "",
-        items: items.map((i: { productName: string; planLabel: string; price: number; qty: number }) => ({
-          name: i.productName,
-          plan: i.planLabel,
-          price: i.price,
-          qty: i.qty ?? 1,
-          subtotal: i.price * (i.qty ?? 1),
-        })),
-        total,
-        status: "pending_payment",
-        payment_method: "bank_transfer",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      if (resolvedCustomerId) {
-        try { posOrder.customer_id = new ObjectId(resolvedCustomerId); } catch { posOrder.customer_id = resolvedCustomerId; }
-      }
-      await db.collection("orders").insertOne(posOrder);
-    } catch (posErr) {
-      // Non-fatal — web order already saved
-      console.error("POS sync error", posErr);
+    } catch (err) {
+      console.error("customer sync error", err);
     }
+
+    // Single insert — Order model writes to `orders` collection with source:"webcodoo"
+    const order = await Order.create({
+      orderId,
+      phone: normalizedPhone,
+      name,
+      customer_name: name,
+      notes,
+      items: items.map((i: { productName: string; planLabel: string; price: number; qty: number }) => ({
+        productSlug: "",
+        productName: i.productName,
+        planLabel: i.planLabel,
+        price: i.price,
+        qty: i.qty ?? 1,
+        name: i.productName,
+        plan: i.planLabel,
+        subtotal: i.price * (i.qty ?? 1),
+      })),
+      total,
+      totalAmount: total,
+      posCustomerId: resolvedCustomerId,
+      source: "webcodoo",
+      status: "pending_payment",
+    });
 
     // Send Telegram notification
     const chatId = process.env.TELEGRAM_CHAT_ID;

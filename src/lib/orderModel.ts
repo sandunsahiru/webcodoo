@@ -15,8 +15,11 @@ export interface IOrder extends Document {
   notes?: string;
   items: IOrderItem[];
   total: number;
+  totalAmount: number;
   status: "pending_payment" | "confirmed" | "delivered" | "cancelled";
   posCustomerId?: string;
+  source: string;
+  customer_name: string;
   createdAt: Date;
 }
 
@@ -33,11 +36,14 @@ const OrderSchema = new Schema<IOrder>(
     orderId: { type: String, unique: true },
     phone: { type: String, index: true },
     name: String,
+    customer_name: String,
     notes: String,
     items: [OrderItemSchema],
     total: Number,
+    totalAmount: Number,
     status: { type: String, default: "pending_payment" },
     posCustomerId: String,
+    source: { type: String, default: "webcodoo" },
   },
   { timestamps: true }
 );
