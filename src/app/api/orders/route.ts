@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/lib/orderModel";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { ObjectId } from "mongodb";
 
 function genOrderId(): string {
   const rand = Math.floor(1000 + Math.random() * 9000);
@@ -127,6 +128,37 @@ export async function POST(req: NextRequest) {
       source: "webcodoo",
       status: "pending_payment",
     });
+
+    // Create pending Sale records in POS sales collection so they show in Sales > Unpaid
+    try {
+      const conn2 = await connectDB();
+      const db2 = conn2.connection.db!;
+      const saleDocs = (items as { productName: string; planLabel: string; price: number; qty?: number }[]).map((i) => {
+        const qty = i.qty ?? 1;
+        const displayName = i.planLabel ? `${i.productName} (${i.planLabel})` : i.productName;
+        const doc: Record<string, unknown> = {
+          originalPrice: i.price,
+          discount: 0,
+          finalPrice: i.price * qty,
+          saleDate: new Date(),
+          isPaid: false,
+          notificationSent: false,
+          source: "webcodoo",
+          webOrderId: orderId,
+          productName: displayName,
+          notes: `Web order ${orderId}${notes ? " — " + notes : ""}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        if (resolvedCustomerId) {
+          try { doc.customer = new ObjectId(resolvedCustomerId); } catch { /* skip */ }
+        }
+        return doc;
+      });
+      await db2.collection("sales").insertMany(saleDocs);
+    } catch (err) {
+      console.error("sale sync error", err);
+    }
 
     // Send Telegram notification
     const chatId = process.env.TELEGRAM_CHAT_ID;
