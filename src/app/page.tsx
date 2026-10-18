@@ -186,6 +186,91 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── HOW TO ORDER ────────────────────────────────────────────── */}
+      <section className="relative z-10 py-12 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+            How to Order — It&apos;s Simple
+          </h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
+            Get your subscription in minutes, not days
+          </p>
+          <div className="grid grid-cols-3 gap-4 sm:gap-6 relative">
+            {/* Connector line */}
+            <div className="absolute top-8 left-[16%] right-[16%] h-[2px] hidden sm:block" style={{ background: "linear-gradient(90deg, rgba(124,58,237,0.3), rgba(79,70,229,0.3))" }} />
+            {[
+              { step: "1", icon: "🛍️", title: "Pick a Product", desc: "Browse and choose the tool you need" },
+              { step: "2", icon: "💬", title: "Message Us", desc: "Tap 'Buy on WhatsApp' — no forms, no accounts" },
+              { step: "3", icon: "⚡", title: "Instant Access", desc: "We deliver your login details within minutes" },
+            ].map((s) => (
+              <div key={s.step} className="flex flex-col items-center gap-2 relative z-10">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg mb-1"
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                >
+                  {s.icon}
+                </div>
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white -mt-3 ml-8"
+                  style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                >
+                  {s.step}
+                </div>
+                <div className="font-semibold text-xs sm:text-sm" style={{ color: "var(--text-primary)" }}>{s.title}</div>
+                <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ────────────────────────────────────────────── */}
+      <section className="relative z-10 py-10 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-1" style={{ color: "var(--text-primary)" }}>
+            What Customers Say
+          </h2>
+          <p className="text-sm text-center mb-8" style={{ color: "var(--text-muted)" }}>
+            500+ happy customers across Sri Lanka
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { name: "Kavindi S.", role: "University Student", text: "Got Quillbot Premium for Rs.400 and it worked perfectly! Delivery was instant on WhatsApp. 100% legit and trustworthy.", stars: 5, product: "Quillbot Premium" },
+              { name: "Tharindu M.", role: "Freelance Designer", text: "Ordered Figma Edu and received it within 5 minutes. Been using it for months with no issues. Best price I found anywhere.", stars: 5, product: "Figma Edu" },
+              { name: "Sachini P.", role: "Content Creator", text: "StealthWriter AI is amazing for Rs.2500/month. The support on WhatsApp is super fast. Highly recommend Webcodoo!", stars: 5, product: "StealthWriter AI" },
+            ].map((t) => (
+              <div
+                key={t.name}
+                className="rounded-2xl p-5 flex flex-col gap-3"
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
+              >
+                {/* Stars */}
+                <div className="flex gap-0.5">
+                  {Array.from({ length: t.stars }).map((_, i) => (
+                    <span key={i} className="text-amber-400 text-sm">★</span>
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--text-secondary)" }}>
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div className="flex items-center gap-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                  >
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{t.name}</div>
+                    <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{t.role} · {t.product}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── PRODUCTS SECTION ────────────────────────────────────────── */}
       <section id="products" className="relative z-10 max-w-7xl mx-auto px-4 pb-20">
 
@@ -321,8 +406,13 @@ export default function Home() {
                 >
                   <div>
                     <div className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>Starting from</div>
-                    <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
-                      Rs. {product.startingPrice.toLocaleString()}
+                    <div className="flex items-baseline gap-1.5">
+                      <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
+                        Rs. {product.startingPrice.toLocaleString()}
+                      </div>
+                      <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>
+                        Rs. {(product.startingPrice * 5).toLocaleString()}
+                      </div>
                     </div>
                     <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
                   </div>
