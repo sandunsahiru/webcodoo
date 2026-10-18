@@ -9,14 +9,63 @@ function genOrderId(): string {
   return `WCD-${rand}`;
 }
 
-// Normalize to +94XXXXXXXXX for Sri Lankan numbers
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("94") && digits.length === 11) return `+${digits}`;
-  if (digits.startsWith("0") && digits.length === 10) return `+94${digits.slice(1)}`;
-  if (digits.length === 9) return `+94${digits}`;
-  // Already has + or unknown format — return as-is
-  return phone.trim();
+/**
+ * Normalize phone to E.164 (+CCXXXXXXXXX).
+ * Rules (applied in order):
+ *  1. Already has +  → strip spaces/dashes only, keep as-is
+ *  2. Starts with 00 → replace 00 with +
+ *  3. Known country-code prefix without + (94, 44, 61, 1, 49, 33, 91…)
+ *     → add +
+ *  4. Starts with 0, 10 digits total → Sri Lanka  (+94 + 9 digits)
+ *  5. Starts with 0, 11 digits total → UK         (+44 + 10 digits)
+ *  6. Starts with 04, 10 digits     → Australia   (+61 + 9 digits)
+ *  7. 9 digits (no leading 0)       → Sri Lanka   (+94 + 9 digits)
+ *  8. 10 digits (no leading 0)      → US/Canada   (+1 + 10 digits)
+ *  9. Anything else                 → return cleaned as-is
+ */
+function normalizePhone(raw: string): string {
+  const trimmed = raw.trim();
+
+  // Already international
+  if (trimmed.startsWith("+")) return trimmed.replace(/[^\d+]/g, "");
+
+  const digits = trimmed.replace(/\D/g, "");
+
+  // 00-prefixed international dialing code
+  if (digits.startsWith("00") && digits.length > 4) return `+${digits.slice(2)}`;
+
+  // Explicit country code without + — match by known prefixes
+  const knownPrefixes: [string, number][] = [
+    ["94",  11], // Sri Lanka  (+94 + 9)
+    ["44",  12], // UK         (+44 + 10)
+    ["61",  11], // Australia  (+61 + 9)
+    ["49",  12], // Germany    (+49 + 10)
+    ["33",  11], // France     (+33 + 9)
+    ["91",  12], // India      (+91 + 10)
+    ["1",   11], // US/Canada  (+1  + 10)
+  ];
+  for (const [cc, len] of knownPrefixes) {
+    if (digits.startsWith(cc) && digits.length === len) return `+${digits}`;
+  }
+
+  // Leading 0 — country determined by total length
+  if (digits.startsWith("0")) {
+    if (digits.length === 10) {
+      // Could be Sri Lanka (07X…) or Australia (04X…)
+      // Australian mobiles start with 04
+      if (digits.startsWith("04")) return `+61${digits.slice(1)}`;
+      return `+94${digits.slice(1)}`; // default → Sri Lanka
+    }
+    if (digits.length === 11) return `+44${digits.slice(1)}`; // UK  (07xxx = 11 digits with 0)
+    if (digits.length === 12) return `+49${digits.slice(1)}`; // Germany (German mobile with 0)
+  }
+
+  // No leading 0, no country code detected
+  if (digits.length === 9)  return `+94${digits}`;  // Sri Lankan local without 0
+  if (digits.length === 10) return `+1${digits}`;   // US/Canada 10-digit
+
+  // Unknown / already has enough info — just clean it
+  return digits ? `+${digits}` : trimmed;
 }
 
 export async function POST(req: NextRequest) {

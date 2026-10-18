@@ -190,7 +190,10 @@ export default function CheckoutPage() {
 
             {/* Contact Number — first so lookup can auto-fill name */}
             <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Contact Number</label>
+              <label className="text-xs font-semibold mb-1.5 flex items-center justify-between" style={{ color: "var(--text-secondary)" }}>
+                Contact Number
+                <span className="text-[10px] font-normal" style={{ color: "var(--text-muted)" }}>International? Add country code (e.g. +44, +61)</span>
+              </label>
               <div className="relative">
                 <input
                   type="tel"
