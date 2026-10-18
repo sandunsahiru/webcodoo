@@ -220,24 +220,33 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            {/* Name — auto-filled if existing customer found */}
+            {/* Name — locked until phone lookup completes */}
             <div>
-              <label className="text-xs font-semibold mb-1.5 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
-                Full Name
+              <label className="text-xs font-semibold mb-1.5 flex items-center gap-2" style={{ color: lookupDone ? "var(--text-secondary)" : "var(--text-muted)" }}>
+                Name
+                {lookingUp && (
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Checking number...</span>
+                )}
                 {customer && !nameEdited && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>Auto-filled ✓</span>
+                )}
+                {!lookupDone && !lookingUp && (
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Enter phone number first</span>
                 )}
               </label>
               <input
                 type="text"
-                placeholder="Your full name"
+                placeholder={lookupDone ? "Your name" : "Enter your phone number first"}
                 value={name}
+                disabled={!lookupDone}
                 onChange={(e) => { setName(e.target.value); setNameEdited(true); }}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                 style={{
-                  background: customer && !nameEdited ? "rgba(34,197,94,0.06)" : "var(--bg-input)",
-                  border: `1px solid ${customer && !nameEdited ? "rgba(34,197,94,0.3)" : "var(--border)"}`,
-                  color: "var(--text-primary)"
+                  background: !lookupDone ? "var(--bg-input)" : customer && !nameEdited ? "rgba(34,197,94,0.06)" : "var(--bg-input)",
+                  border: `1px solid ${!lookupDone ? "var(--border)" : customer && !nameEdited ? "rgba(34,197,94,0.3)" : "var(--border)"}`,
+                  color: !lookupDone ? "var(--text-muted)" : "var(--text-primary)",
+                  opacity: !lookupDone ? 0.5 : 1,
+                  cursor: !lookupDone ? "not-allowed" : "text",
                 }}
               />
             </div>
