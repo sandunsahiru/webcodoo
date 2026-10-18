@@ -24,10 +24,19 @@ const fs = require('fs')
 const path = require('path')
 const { MongoClient } = require('mongodb')
 
+// Auto-load .env.local if present (no dotenv dependency needed)
+const envFile = path.join(__dirname, '..', '.env.local')
+if (fs.existsSync(envFile)) {
+  fs.readFileSync(envFile, 'utf8').split('\n').forEach(line => {
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim()
+  })
+}
+
 const MONGODB_URI = process.env.MONGODB_URI ||
   'mongodb+srv://sandunsbandara13_db_user:8KZh5qqhZbst9XVQ@cluster0.izmxy6p.mongodb.net/webcodoo-pos?appName=Cluster0'
 const VPS_URL = (process.env.VPS_IMAGE_URL || 'http://51.79.243.2:3001').replace(/\/$/, '')
-const VPS_SECRET = process.env.VPS_UPLOAD_SECRET || 'change-this-secret'
+const VPS_SECRET = process.env.VPS_UPLOAD_SECRET || ''
 
 // Logos directory (relative to this script's location → ../public/logos)
 const LOGOS_DIR = path.join(__dirname, '..', 'public', 'logos')

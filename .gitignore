@@ -40,6 +40,9 @@ backend/.env.*
 # vercel
 .vercel
 
+# VPS config (contains secrets)
+vps-ecosystem.config.js
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
