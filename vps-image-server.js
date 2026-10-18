@@ -61,7 +61,7 @@ app.use((_req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   next()
 })
-app.options('*', (_req, res) => res.sendStatus(200))
+app.options('/{*path}', (_req, res) => res.sendStatus(200))
 
 // Serve uploaded images
 app.use('/assets', express.static(path.join(__dirname, 'assets'), {
