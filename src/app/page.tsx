@@ -178,7 +178,7 @@ export default function Home() {
         <div className="flex flex-wrap justify-center gap-8 sm:gap-12 mt-14">
           {[
             { val: "500+", label: "Happy Customers" },
-            { val: "11+", label: "Products" },
+            { val: "13+", label: "Products" },
             { val: "Rs.400", label: "Starting From" },
             { val: "24/7", label: "Support" },
           ].map((s) => (
