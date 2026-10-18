@@ -65,7 +65,18 @@ export default function PaymentPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
         <div className="text-center">
-          <div className="text-5xl mb-4">❌</div>
+          <div className="flex justify-center mb-4">
+            <div className="anim-pop-in w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(239,68,68,0.1)", border: "2px solid rgba(239,68,68,0.3)" }}>
+              <svg viewBox="0 0 52 52" className="w-9 h-9" fill="none">
+                <circle cx="26" cy="26" r="24" stroke="rgba(239,68,68,0.4)" strokeWidth="2"
+                  strokeDasharray="150" className="anim-draw-circle" />
+                <path d="M16 16 L36 36 M36 16 L16 36" stroke="#ef4444" strokeWidth="3"
+                  strokeLinecap="round" strokeDasharray="60"
+                  style={{ animation:"draw-check 0.4s ease-out 0.5s forwards", strokeDashoffset:60 }} />
+              </svg>
+            </div>
+          </div>
           <p className="font-semibold mb-2">Order not found</p>
           <Link href="/" className="text-sm text-violet-600 hover:text-violet-700">← Go home</Link>
         </div>
@@ -86,9 +97,32 @@ export default function PaymentPage() {
 
         {/* Success header */}
         <div className="text-center py-5">
-          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-4 text-4xl"
-            style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(79,70,229,0.12))", border: "2px solid rgba(124,58,237,0.25)" }}>
-            🎉
+          {/* Animated success icon */}
+          <div className="relative w-24 h-24 mx-auto mb-5">
+            {/* Ripple rings */}
+            <div className="absolute inset-0 rounded-full" style={{ background: "rgba(124,58,237,0.08)", animation: "ripple 1.8s ease-out 0.2s infinite" }} />
+            <div className="absolute inset-0 rounded-full" style={{ background: "rgba(124,58,237,0.06)", animation: "ripple 1.8s ease-out 0.8s infinite" }} />
+            {/* Main circle with checkmark SVG */}
+            <div className="anim-pop-in absolute inset-0 rounded-full flex items-center justify-center anim-glow-ring"
+              style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
+              <svg viewBox="0 0 52 52" className="w-12 h-12" fill="none">
+                <circle cx="26" cy="26" r="24" stroke="rgba(255,255,255,0.25)" strokeWidth="2"
+                  strokeDasharray="150" className="anim-draw-circle" />
+                <path d="M14 27 L22 35 L38 18" stroke="white" strokeWidth="3.5"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="80" className="anim-draw-check" />
+              </svg>
+            </div>
+            {/* Confetti particles */}
+            {[
+              { color:"#7c3aed", w:8, h:5, style:{ top:"4px", left:"8px", animation:"confetti-1 0.7s ease-out 0.6s both" }},
+              { color:"#4f46e5", w:6, h:8, style:{ top:"4px", right:"8px", animation:"confetti-2 0.7s ease-out 0.7s both" }},
+              { color:"#a78bfa", w:7, h:5, style:{ top:"10px", left:"2px", animation:"confetti-3 0.7s ease-out 0.8s both" }},
+              { color:"#818cf8", w:5, h:7, style:{ top:"10px", right:"2px", animation:"confetti-4 0.7s ease-out 0.65s both" }},
+              { color:"#c4b5fd", w:6, h:6, style:{ top:"0px",  left:"42px", animation:"confetti-5 0.7s ease-out 0.75s both" }},
+            ].map((p, i) => (
+              <div key={i} className="absolute rounded-sm opacity-0" style={{ width: p.w, height: p.h, background: p.color, ...p.style }} />
+            ))}
           </div>
           <h1 className="text-2xl font-extrabold mb-2">Order Placed!</h1>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>

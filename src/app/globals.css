@@ -96,3 +96,87 @@ html {
 /* Animation delays */
 .delay-700  { animation-delay: 0.7s; }
 .delay-1400 { animation-delay: 1.4s; }
+
+/* ── SVG / icon animations ─────────────────────────────────────── */
+
+/* Draw a circle stroke */
+@keyframes draw-circle {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Draw a checkmark stroke */
+@keyframes draw-check {
+  from { stroke-dashoffset: 80; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Scale + fade in */
+@keyframes pop-in {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Sparkle burst */
+@keyframes sparkle {
+  0%   { transform: scale(0) rotate(0deg);   opacity: 1; }
+  80%  { transform: scale(1) rotate(45deg);  opacity: 1; }
+  100% { transform: scale(1.1) rotate(45deg); opacity: 0; }
+}
+
+/* Float up particles */
+@keyframes confetti-1 {
+  0%   { transform: translate(0,0) rotate(0deg);   opacity: 1; }
+  100% { transform: translate(-28px,-40px) rotate(-120deg); opacity: 0; }
+}
+@keyframes confetti-2 {
+  0%   { transform: translate(0,0) rotate(0deg);   opacity: 1; }
+  100% { transform: translate(28px,-40px) rotate(120deg); opacity: 0; }
+}
+@keyframes confetti-3 {
+  0%   { transform: translate(0,0) rotate(0deg);   opacity: 1; }
+  100% { transform: translate(-18px,-50px) rotate(-80deg); opacity: 0; }
+}
+@keyframes confetti-4 {
+  0%   { transform: translate(0,0) rotate(0deg);   opacity: 1; }
+  100% { transform: translate(18px,-50px) rotate(80deg); opacity: 0; }
+}
+@keyframes confetti-5 {
+  0%   { transform: translate(0,0); opacity: 1; }
+  100% { transform: translate(0,-55px); opacity: 0; }
+}
+
+/* Ripple rings */
+@keyframes ripple {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Gentle float */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* Cart wiggle */
+@keyframes cart-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20%  { transform: rotate(-12deg); }
+  40%  { transform: rotate(12deg); }
+  60%  { transform: rotate(-6deg); }
+  80%  { transform: rotate(6deg); }
+}
+
+/* Pulse glow ring */
+@keyframes glow-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+  50%       { box-shadow: 0 0 0 14px rgba(124,58,237,0); }
+}
+
+.anim-draw-circle { animation: draw-circle 0.6s ease-out forwards; }
+.anim-draw-check  { animation: draw-check  0.4s ease-out 0.5s forwards; stroke-dashoffset: 80; }
+.anim-pop-in      { animation: pop-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+.anim-float       { animation: float-y 3s ease-in-out infinite; }
+.anim-cart-wiggle { animation: cart-wiggle 0.8s ease-in-out 0.3s; }
+.anim-glow-ring   { animation: glow-ring 2s ease-in-out infinite; }

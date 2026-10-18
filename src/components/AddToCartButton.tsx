@@ -29,13 +29,20 @@ function AddedDialog({ productName, planLabel, onContinue, onGoToCart }: {
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Success icon */}
+        {/* Animated success icon */}
         <div className="flex justify-center mb-4">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-            style={{ background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.35)" }}
-          >
-            ✅
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full" style={{ background: "rgba(34,197,94,0.08)", animation: "ripple 1.6s ease-out 0.1s infinite" }} />
+            <div className="anim-pop-in absolute inset-0 rounded-full flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg,#16a34a,#22c55e)" }}>
+              <svg viewBox="0 0 52 52" className="w-9 h-9" fill="none">
+                <circle cx="26" cy="26" r="24" stroke="rgba(255,255,255,0.2)" strokeWidth="2"
+                  strokeDasharray="150" className="anim-draw-circle" />
+                <path d="M14 27 L22 35 L38 18" stroke="white" strokeWidth="3.5"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="80" className="anim-draw-check" />
+              </svg>
+            </div>
           </div>
         </div>
 

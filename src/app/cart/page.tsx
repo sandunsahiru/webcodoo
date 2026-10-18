@@ -50,7 +50,26 @@ export default function CartPage() {
 
         {items.length === 0 ? (
           <div className="text-center py-24">
-            <div className="text-6xl mb-4">🛒</div>
+            {/* Animated empty cart */}
+            <div className="flex justify-center mb-6">
+              <div className="relative anim-float">
+                <svg viewBox="0 0 80 80" className="w-20 h-20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="40" cy="40" r="38" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.15)" strokeWidth="1.5" />
+                  {/* Cart body */}
+                  <path d="M22 28h4l4 18h18l4-14H30" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className="anim-cart-wiggle" style={{ transformOrigin:"30px 36px" }} />
+                  {/* Wheels */}
+                  <circle cx="35" cy="50" r="2.5" fill="#7c3aed" style={{ animation:"pop-in 0.4s ease-out 0.9s both" }} />
+                  <circle cx="47" cy="50" r="2.5" fill="#7c3aed" style={{ animation:"pop-in 0.4s ease-out 1.0s both" }} />
+                  {/* Handle */}
+                  <path d="M20 28h-4" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round" />
+                  {/* Sparkles */}
+                  <circle cx="54" cy="24" r="2" fill="#c4b5fd" style={{ animation:"pop-in 0.3s ease-out 1.1s both, float-y 2s ease-in-out 1.1s infinite" }} />
+                  <circle cx="25" cy="22" r="1.5" fill="#818cf8" style={{ animation:"pop-in 0.3s ease-out 1.2s both, float-y 2.4s ease-in-out 1.2s infinite" }} />
+                  <path d="M57 34 L59 36 L57 38 L55 36 Z" fill="#7c3aed" style={{ animation:"pop-in 0.3s ease-out 1.3s both, float-y 1.8s ease-in-out 1.3s infinite" }} />
+                </svg>
+              </div>
+            </div>
             <p className="text-xl font-bold mb-2">Your cart is empty</p>
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Looks like you haven&apos;t added any subscriptions yet.</p>
             <Link
