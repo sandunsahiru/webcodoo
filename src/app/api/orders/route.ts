@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Order } from "@/lib/orderModel";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { ObjectId } from "mongodb";
 
 function genOrderId(): string {
   const d = new Date();
@@ -24,6 +25,40 @@ export async function POST(req: NextRequest) {
     const orderId = genOrderId();
 
     const order = await Order.create({ orderId, phone, name, notes, items, total, posCustomerId, status: "pending_payment" });
+
+    // Mirror order to POS database orders collection
+    try {
+      const conn = await connectDB();
+      const db = conn.connection.db!;
+      const posOrder: Record<string, unknown> = {
+        orderId,
+        source: "webcodoo",
+        phone,
+        customer_name: name,
+        name,
+        notes: notes ?? "",
+        items: items.map((i: { productName: string; planLabel: string; price: number; qty: number }) => ({
+          name: i.productName,
+          plan: i.planLabel,
+          price: i.price,
+          qty: i.qty ?? 1,
+          subtotal: i.price * (i.qty ?? 1),
+        })),
+        total,
+        status: "pending_payment",
+        payment_method: "bank_transfer",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      // Link to existing POS customer if we have their ID
+      if (posCustomerId) {
+        try { posOrder.customer_id = new ObjectId(posCustomerId); } catch { posOrder.customer_id = posCustomerId; }
+      }
+      await db.collection("orders").insertOne(posOrder);
+    } catch (posErr) {
+      // Non-fatal: web order already saved, just log the POS sync failure
+      console.error("POS sync error", posErr);
+    }
 
     // Send Telegram notification
     const chatId = process.env.TELEGRAM_CHAT_ID;
