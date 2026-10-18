@@ -9,6 +9,16 @@ function genOrderId(): string {
   return `WCD-${rand}`;
 }
 
+// Normalize to +94XXXXXXXXX for Sri Lankan numbers
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("94") && digits.length === 11) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length === 10) return `+94${digits.slice(1)}`;
+  if (digits.length === 9) return `+94${digits}`;
+  // Already has + or unknown format — return as-is
+  return phone.trim();
+}
+
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -19,19 +29,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Normalize phone to +94XXXXXXXXX
+    const normalizedPhone = normalizePhone(phone);
+
     const total = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * (i.qty ?? 1), 0);
     const orderId = genOrderId();
 
-    const order = await Order.create({ orderId, phone, name, notes, items, total, posCustomerId, status: "pending_payment" });
+    const order = await Order.create({ orderId, phone: normalizedPhone, name, notes, items, total, posCustomerId, status: "pending_payment" });
 
-    // Mirror order to POS database orders collection
+    // Mirror order to POS + register new customer if not in POS
     try {
       const conn = await connectDB();
       const db = conn.connection.db!;
+
+      let resolvedCustomerId = posCustomerId;
+
+      // New customer — add to POS customers collection
+      if (!posCustomerId) {
+        const newCustomer = {
+          name,
+          customer_name: name,
+          phone: normalizedPhone,
+          mobile: normalizedPhone,
+          source: "webcodoo",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        const result = await db.collection("customers").insertOne(newCustomer);
+        resolvedCustomerId = result.insertedId.toString();
+      }
+
       const posOrder: Record<string, unknown> = {
         orderId,
         source: "webcodoo",
-        phone,
+        phone: normalizedPhone,
         customer_name: name,
         name,
         notes: notes ?? "",
@@ -48,13 +79,13 @@ export async function POST(req: NextRequest) {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      // Link to existing POS customer if we have their ID
-      if (posCustomerId) {
-        try { posOrder.customer_id = new ObjectId(posCustomerId); } catch { posOrder.customer_id = posCustomerId; }
+
+      if (resolvedCustomerId) {
+        try { posOrder.customer_id = new ObjectId(resolvedCustomerId); } catch { posOrder.customer_id = resolvedCustomerId; }
       }
       await db.collection("orders").insertOne(posOrder);
     } catch (posErr) {
-      // Non-fatal: web order already saved, just log the POS sync failure
+      // Non-fatal — web order already saved
       console.error("POS sync error", posErr);
     }
 
