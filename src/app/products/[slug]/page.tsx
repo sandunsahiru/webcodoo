@@ -2,24 +2,58 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, products } from "@/lib/products";
+import { connectDB } from "@/lib/mongodb";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { CartNavButton } from "@/components/CartNavButton";
 
+export const dynamic = "force-dynamic";
+
 const WA_NUMBER = "94702947854";
 
-export async function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+interface DbVariation {
+  _id: string;
+  label: string;
+  price: number;
+  stock: number;
+  highlight?: boolean;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const product = getProduct(slug);
-  if (!product) return {};
-  return {
-    title: `${product.name} – Webcodoo`,
-    description: product.description,
-  };
+interface DbProduct {
+  _id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  image?: string;
+  variations?: DbVariation[];
+}
+
+async function getDbProduct(slug: string): Promise<DbProduct | null> {
+  try {
+    const conn = await connectDB();
+    const db = conn.connection.db!;
+    const doc = await db.collection("products").findOne({
+      slug,
+      isActive: { $ne: false },
+    });
+    if (!doc) return null;
+    return {
+      _id: doc._id.toString(),
+      slug: doc.slug,
+      name: doc.name,
+      description: doc.description,
+      image: doc.image,
+      variations: (doc.variations || []).map((v: Record<string, unknown>) => ({
+        _id: v._id?.toString() ?? "",
+        label: String(v.label ?? ""),
+        price: Number(v.price ?? 0),
+        stock: Number(v.stock ?? -1),
+        highlight: Boolean(v.highlight),
+      })),
+    };
+  } catch {
+    return null;
+  }
 }
 
 const WaIconSm = () => (
@@ -34,10 +68,58 @@ const WaIconMd = () => (
   </svg>
 );
 
-export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = getProduct(slug);
-  if (!product) notFound();
+  if (!product) return {};
+  return {
+    title: `${product.name} – Webcodoo`,
+    description: product.description,
+  };
+}
+
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+
+  // Static product (display metadata: features, access method, etc.)
+  const staticProduct = getProduct(slug);
+
+  // DB product (live pricing + stock)
+  const dbProduct = await getDbProduct(slug);
+
+  if (!staticProduct && !dbProduct) notFound();
+
+  // Merge: use static for display, DB for pricing/stock
+  const product = staticProduct ?? {
+    slug,
+    name: dbProduct!.name,
+    tagline: "",
+    icon: "📦",
+    logoUrl: dbProduct!.image,
+    category: "Digital",
+    startingPrice: dbProduct!.variations?.[0]?.price ?? 0,
+    duration: "Subscription",
+    color: "from-violet-600 to-purple-700",
+    description: dbProduct!.description ?? "",
+    accessMethod: "",
+    features: [],
+    plans: [],
+  };
+
+  // Plans: prefer DB variations (live stock), fall back to static plans
+  type Plan = { label: string; price: number; highlight?: boolean; variationId?: string; outOfStock?: boolean };
+  const plans: Plan[] = (dbProduct?.variations && dbProduct.variations.length > 0)
+    ? dbProduct.variations.map((v) => ({
+        label: v.label,
+        price: v.price,
+        highlight: v.highlight,
+        variationId: v._id,
+        outOfStock: v.stock === 0,
+      }))
+    : (staticProduct?.plans ?? []).map((p) => ({ label: p.label, price: p.price, highlight: p.highlight }));
+
+  const productId = dbProduct?._id;
+  const logoUrl = dbProduct?.image ?? product.logoUrl;
 
   const waMessage = encodeURIComponent(
     `Hi! I want to order *${product.name}* from Webcodoo. Please provide details.`
@@ -71,25 +153,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <Link href="/">
             <Image src="/logo.png" alt="Webcodoo" width={150} height={50} className="h-10 w-auto object-contain" />
           </Link>
-
-          {/* Nav links */}
           <div className="hidden sm:flex items-center gap-1">
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
-              style={{ color: "var(--text-secondary)" }}
-            >
+            <Link href="/" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40" style={{ color: "var(--text-secondary)" }}>
               Home
             </Link>
-            <Link
-              href="/#products"
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40"
-              style={{ color: "var(--text-secondary)" }}
-            >
+            <Link href="/#products" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-violet-50 dark:hover:bg-violet-950/40" style={{ color: "var(--text-secondary)" }}>
               Shop
             </Link>
           </div>
-
           <div className="flex items-center gap-2">
             <CartNavButton />
             <ThemeToggle />
@@ -118,9 +189,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* ── LEFT ─────────────────────────────────────────────── */}
+          {/* ── LEFT ── */}
           <div className="lg:col-span-3 space-y-5">
-
             {/* Header card */}
             <div
               className="rounded-3xl p-6 sm:p-8"
@@ -128,8 +198,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             >
               <div className="flex items-start gap-5 mb-5">
                 <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${product.color} flex items-center justify-center overflow-hidden shadow-xl flex-shrink-0 p-3`}>
-                  {product.logoUrl ? (
-                    <img src={product.logoUrl} alt={product.name} className="w-full h-full object-contain drop-shadow" />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={product.name} className="w-full h-full object-contain drop-shadow" />
                   ) : (
                     <span className="text-4xl">{product.icon}</span>
                   )}
@@ -152,61 +222,61 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>{product.tagline}</p>
                 </div>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{product.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                {dbProduct?.description ?? product.description}
+              </p>
             </div>
 
             {/* Features */}
-            <div
-              className="rounded-3xl p-6"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
-            >
-              <h2 className="font-bold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-                <span
-                  className="w-6 h-6 rounded-lg flex items-center justify-center text-xs text-violet-600"
-                  style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
-                >✓</span>
-                What&apos;s Included
-              </h2>
-              <ul className="space-y-2.5">
-                {product.features.map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-sm" style={{ color: "var(--text-secondary)" }}>
-                    <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}
-                    >
-                      <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {product.features.length > 0 && (
+              <div
+                className="rounded-3xl p-6"
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
+              >
+                <h2 className="font-bold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+                  <span className="w-6 h-6 rounded-lg flex items-center justify-center text-xs text-violet-600" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>✓</span>
+                  What&apos;s Included
+                </h2>
+                <ul className="space-y-2.5">
+                  {product.features.map((f) => (
+                    <li key={f} className="flex items-start gap-3 text-sm" style={{ color: "var(--text-secondary)" }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                        <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Access method */}
-            <div
-              className="rounded-3xl p-6"
-              style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}
-            >
-              <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-                <span>🔑</span> How You Get Access
-              </h2>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{product.accessMethod}</p>
-              {product.loginLink && (
-                <a
-                  href={product.loginLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-3 text-blue-500 hover:text-blue-400 text-sm transition-colors"
-                >
-                  🌐 {product.loginLink}
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              )}
-            </div>
+            {product.accessMethod && (
+              <div
+                className="rounded-3xl p-6"
+                style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}
+              >
+                <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+                  <span>🔑</span> How You Get Access
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{product.accessMethod}</p>
+                {product.loginLink && (
+                  <a
+                    href={product.loginLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-3 text-blue-500 hover:text-blue-400 text-sm transition-colors"
+                  >
+                    🌐 {product.loginLink}
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Note */}
             {product.note && (
@@ -220,7 +290,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )}
           </div>
 
-          {/* ── RIGHT: Pricing ───────────────────────────────────── */}
+          {/* ── RIGHT: Pricing ── */}
           <div className="lg:col-span-2">
             <div
               className="rounded-3xl p-6 sticky top-24"
@@ -229,7 +299,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <h2 className="font-bold mb-4" style={{ color: "var(--text-primary)" }}>Choose a Plan</h2>
 
               <div className="space-y-3 mb-5">
-                {product.plans.map((plan) => (
+                {plans.map((plan) => (
                   <div
                     key={plan.label}
                     className="hover-plan flex items-center justify-between p-4 rounded-2xl"
@@ -244,10 +314,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         {plan.label}
                       </span>
                       {plan.highlight && (
-                        <span
-                          className="text-[9px] text-white px-2 py-0.5 rounded-full font-bold"
-                          style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
-                        >
+                        <span className="text-[9px] text-white px-2 py-0.5 rounded-full font-bold" style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}>
                           POPULAR
                         </span>
                       )}
@@ -262,20 +329,35 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         productName={product.name}
                         planLabel={plan.label}
                         price={plan.price}
+                        productId={productId}
+                        variationId={plan.variationId}
+                        outOfStock={plan.outOfStock}
                       />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Buy Now CTA */}
-              <AddToCartButton
-                productSlug={product.slug}
-                productName={product.name}
-                planLabel={product.plans[0].label}
-                price={product.plans[0].price}
-                variant="buynow"
-              />
+              {/* Buy Now CTA — use first available plan */}
+              {(() => {
+                const firstAvailable = plans.find((p) => !p.outOfStock);
+                if (!firstAvailable) return (
+                  <div className="w-full text-center py-4 rounded-2xl text-gray-400 text-sm font-medium" style={{ background: "var(--bg-input)", border: "1px solid var(--border)" }}>
+                    All plans currently out of stock
+                  </div>
+                );
+                return (
+                  <AddToCartButton
+                    productSlug={product.slug}
+                    productName={product.name}
+                    planLabel={firstAvailable.label}
+                    price={firstAvailable.price}
+                    productId={productId}
+                    variationId={firstAvailable.variationId}
+                    variant="buynow"
+                  />
+                );
+              })()}
 
               <div className="flex items-center gap-3 mt-3">
                 <div className="flex-1 h-px" style={{ background: "var(--border)" }} />

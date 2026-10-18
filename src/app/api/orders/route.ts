@@ -11,85 +11,88 @@ function genOrderId(): string {
 
 /**
  * Normalize phone to E.164 (+CCXXXXXXXXX).
- * Rules (applied in order):
- *  1. Already has +  → strip spaces/dashes only, keep as-is
- *  2. Starts with 00 → replace 00 with +
- *  3. Known country-code prefix without + (94, 44, 61, 1, 49, 33, 91…)
- *     → add +
- *  4. Starts with 0, 10 digits total → Sri Lanka  (+94 + 9 digits)
- *  5. Starts with 0, 11 digits total → UK         (+44 + 10 digits)
- *  6. Starts with 04, 10 digits     → Australia   (+61 + 9 digits)
- *  7. 9 digits (no leading 0)       → Sri Lanka   (+94 + 9 digits)
- *  8. 10 digits (no leading 0)      → US/Canada   (+1 + 10 digits)
- *  9. Anything else                 → return cleaned as-is
  */
 function normalizePhone(raw: string): string {
   const trimmed = raw.trim();
-
-  // Already international
   if (trimmed.startsWith("+")) return trimmed.replace(/[^\d+]/g, "");
-
   const digits = trimmed.replace(/\D/g, "");
-
-  // 00-prefixed international dialing code
   if (digits.startsWith("00") && digits.length > 4) return `+${digits.slice(2)}`;
-
-  // Explicit country code without + — match by known prefixes
   const knownPrefixes: [string, number][] = [
-    ["94",  11], // Sri Lanka  (+94 + 9)
-    ["44",  12], // UK         (+44 + 10)
-    ["61",  11], // Australia  (+61 + 9)
-    ["49",  12], // Germany    (+49 + 10)
-    ["33",  11], // France     (+33 + 9)
-    ["91",  12], // India      (+91 + 10)
-    ["1",   11], // US/Canada  (+1  + 10)
+    ["94", 11], ["44", 12], ["61", 11], ["49", 12], ["33", 11], ["91", 12], ["1", 11],
   ];
   for (const [cc, len] of knownPrefixes) {
     if (digits.startsWith(cc) && digits.length === len) return `+${digits}`;
   }
-
-  // Leading 0 — country determined by total length
   if (digits.startsWith("0")) {
     if (digits.length === 10) {
-      // Could be Sri Lanka (07X…) or Australia (04X…)
-      // Australian mobiles start with 04
       if (digits.startsWith("04")) return `+61${digits.slice(1)}`;
-      return `+94${digits.slice(1)}`; // default → Sri Lanka
+      return `+94${digits.slice(1)}`;
     }
-    if (digits.length === 11) return `+44${digits.slice(1)}`; // UK  (07xxx = 11 digits with 0)
-    if (digits.length === 12) return `+49${digits.slice(1)}`; // Germany (German mobile with 0)
+    if (digits.length === 11) return `+44${digits.slice(1)}`;
+    if (digits.length === 12) return `+49${digits.slice(1)}`;
   }
-
-  // No leading 0, no country code detected
-  if (digits.length === 9)  return `+94${digits}`;  // Sri Lankan local without 0
-  if (digits.length === 10) return `+1${digits}`;   // US/Canada 10-digit
-
-  // Unknown / already has enough info — just clean it
+  if (digits.length === 9) return `+94${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
   return digits ? `+${digits}` : trimmed;
+}
+
+interface OrderItem {
+  productName: string;
+  planLabel: string;
+  price: number;
+  qty?: number;
+  productId?: string;
+  variationId?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    await connectDB();
+    const conn = await connectDB();
+    const db = conn.connection.db!;
     const body = await req.json();
-    const { phone, name, notes, items, posCustomerId } = body;
+    const { phone, name, notes, items, posCustomerId } = body as {
+      phone: string;
+      name: string;
+      notes?: string;
+      items: OrderItem[];
+      posCustomerId?: string;
+    };
 
     if (!phone || !name || !items?.length) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Normalize phone to +94XXXXXXXXX
-    const normalizedPhone = normalizePhone(phone);
+    // Check stock availability for tracked variations
+    for (const item of items) {
+      if (item.variationId && item.productId) {
+        try {
+          const available = await db.collection("products").findOne({
+            _id: new ObjectId(item.productId),
+            variations: {
+              $elemMatch: {
+                _id: new ObjectId(item.variationId),
+                $or: [{ stock: { $gt: 0 } }, { stock: -1 }],
+              },
+            },
+          });
+          if (!available) {
+            return NextResponse.json(
+              { error: `"${item.productName}" (${item.planLabel}) is out of stock` },
+              { status: 400 }
+            );
+          }
+        } catch { /* invalid ObjectId — skip check */ }
+      }
+    }
 
-    const total = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * (i.qty ?? 1), 0);
+    const normalizedPhone = normalizePhone(phone);
+    const total = items.reduce((s, i) => s + i.price * (i.qty ?? 1), 0);
     const orderId = genOrderId();
 
-    // Register new customer in POS customers collection if needed
+    // Register new customer if needed
     let resolvedCustomerId = posCustomerId;
-    try {
-      const conn = await connectDB();
-      const db = conn.connection.db!;
-      if (!posCustomerId) {
+    if (!posCustomerId) {
+      try {
         const result = await db.collection("customers").insertOne({
           name,
           customer_name: name,
@@ -100,19 +103,19 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date(),
         });
         resolvedCustomerId = result.insertedId.toString();
+      } catch (err) {
+        console.error("customer sync error", err);
       }
-    } catch (err) {
-      console.error("customer sync error", err);
     }
 
-    // Single insert — Order model writes to `orders` collection with source:"webcodoo"
+    // Create order
     const order = await Order.create({
       orderId,
       phone: normalizedPhone,
       name,
       customer_name: name,
       notes,
-      items: items.map((i: { productName: string; planLabel: string; price: number; qty: number }) => ({
+      items: items.map((i) => ({
         productSlug: "",
         productName: i.productName,
         planLabel: i.planLabel,
@@ -121,6 +124,8 @@ export async function POST(req: NextRequest) {
         name: i.productName,
         plan: i.planLabel,
         subtotal: i.price * (i.qty ?? 1),
+        productId: i.productId,
+        variationId: i.variationId,
       })),
       total,
       totalAmount: total,
@@ -129,11 +134,9 @@ export async function POST(req: NextRequest) {
       status: "pending_payment",
     });
 
-    // Create pending Sale records in POS sales collection so they show in Sales > Unpaid
+    // Create pending Sale records
     try {
-      const conn2 = await connectDB();
-      const db2 = conn2.connection.db!;
-      const saleDocs = (items as { productName: string; planLabel: string; price: number; qty?: number }[]).map((i) => {
+      const saleDocs = items.map((i) => {
         const qty = i.qty ?? 1;
         const displayName = i.planLabel ? `${i.productName} (${i.planLabel})` : i.productName;
         const doc: Record<string, unknown> = {
@@ -153,27 +156,43 @@ export async function POST(req: NextRequest) {
         if (resolvedCustomerId) {
           try { doc.customer = new ObjectId(resolvedCustomerId); } catch { /* skip */ }
         }
+        if (i.productId) {
+          try { doc.product = new ObjectId(i.productId); } catch { /* skip */ }
+        }
         return doc;
       });
-      await db2.collection("sales").insertMany(saleDocs);
+      await db.collection("sales").insertMany(saleDocs);
     } catch (err) {
       console.error("sale sync error", err);
     }
 
-    // Send Telegram notification
+    // Decrement stock for tracked variations (stock >= 0, not -1)
+    for (const item of items) {
+      if (item.variationId && item.productId) {
+        try {
+          await db.collection("products").updateOne(
+            {
+              _id: new ObjectId(item.productId),
+              "variations._id": new ObjectId(item.variationId),
+              "variations.stock": { $gt: 0 },
+            },
+            { $inc: { "variations.$.stock": -(item.qty ?? 1) } }
+          );
+        } catch { /* skip — invalid IDs or unlimited stock */ }
+      }
+    }
+
+    // Telegram notification
     const chatId = process.env.TELEGRAM_CHAT_ID;
     if (chatId) {
       const itemLines = items
-        .map((i: { productName: string; planLabel: string; price: number; qty: number }) =>
-          `  • ${i.productName} - ${i.planLabel} × ${i.qty ?? 1} = Rs. ${(i.price * (i.qty ?? 1)).toLocaleString()}`)
+        .map((i) => `  • ${i.productName} - ${i.planLabel} × ${i.qty ?? 1} = Rs. ${(i.price * (i.qty ?? 1)).toLocaleString()}`)
         .join("\n");
-
       const notesLine = notes ? `\n📝 Note: ${notes}` : "";
       const msg = `🛒 <b>NEW ORDER</b> #${orderId}\n\n` +
         `👤 ${name}\n📱 ${phone}\n💰 <b>Total: Rs. ${total.toLocaleString()}</b>\n\n` +
         `📦 Items:\n${itemLines}${notesLine}\n\n` +
         `💳 Awaiting bank payment\n⏰ ${new Date().toLocaleString("en-LK", { timeZone: "Asia/Colombo" })}`;
-
       await sendTelegramMessage(chatId, msg).catch(console.error);
     }
 

@@ -8,6 +8,8 @@ export interface CartItem {
   planLabel: string;
   price: number;
   qty: number;
+  productId?: string;
+  variationId?: string;
 }
 
 interface CartContextValue {
@@ -31,11 +33,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  const save = (next: CartItem[]) => {
-    setItems(next);
-    try { localStorage.setItem("wcd_cart", JSON.stringify(next)); } catch {}
-  };
-
   const addItem = useCallback((item: Omit<CartItem, "qty">) => {
     setItems((prev) => {
       const idx = prev.findIndex((i) => i.productSlug === item.productSlug && i.planLabel === item.planLabel);
@@ -56,7 +53,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearCart = useCallback(() => {
-    save([]);
+    const next: CartItem[] = [];
+    setItems(next);
+    try { localStorage.setItem("wcd_cart", JSON.stringify(next)); } catch {}
   }, []);
 
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);

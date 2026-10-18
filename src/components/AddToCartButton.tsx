@@ -9,6 +9,9 @@ interface Props {
   productName: string;
   planLabel: string;
   price: number;
+  productId?: string;
+  variationId?: string;
+  outOfStock?: boolean;
   variant?: "cart" | "buynow";
 }
 
@@ -29,7 +32,6 @@ function AddedDialog({ productName, planLabel, onContinue, onGoToCart }: {
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Animated success icon */}
         <div className="flex justify-center mb-4">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full" style={{ background: "rgba(34,197,94,0.08)", animation: "ripple 1.6s ease-out 0.1s infinite" }} />
@@ -75,19 +77,44 @@ function AddedDialog({ productName, planLabel, onContinue, onGoToCart }: {
   );
 }
 
-export function AddToCartButton({ productSlug, productName, planLabel, price, variant = "cart" }: Props) {
+export function AddToCartButton({
+  productSlug,
+  productName,
+  planLabel,
+  price,
+  productId,
+  variationId,
+  outOfStock = false,
+  variant = "cart",
+}: Props) {
   const { addItem } = useCart();
   const router = useRouter();
   const [showDialog, setShowDialog] = useState(false);
 
   const handle = () => {
-    addItem({ productSlug, productName, planLabel, price });
+    if (outOfStock) return;
+    addItem({ productSlug, productName, planLabel, price, productId, variationId });
     if (variant === "buynow") {
       router.push("/cart");
     } else {
       setShowDialog(true);
     }
   };
+
+  if (outOfStock) {
+    return (
+      <span
+        className="flex items-center justify-center gap-1.5 font-semibold py-2.5 px-4 rounded-xl text-sm"
+        style={{
+          background: "rgba(156,163,175,0.1)",
+          border: "1px solid rgba(156,163,175,0.3)",
+          color: "#9ca3af",
+        }}
+      >
+        Out of Stock
+      </span>
+    );
+  }
 
   if (variant === "buynow") {
     return (
