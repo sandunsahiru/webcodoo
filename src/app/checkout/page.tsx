@@ -188,20 +188,7 @@ export default function CheckoutPage() {
               <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
             </div>
 
-            {/* Name */}
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Full Name</label>
-              <input
-                type="text"
-                placeholder="Your full name"
-                value={name}
-                onChange={(e) => { setName(e.target.value); setNameEdited(true); }}
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                style={{ background: "var(--bg-input)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-              />
-            </div>
-
-            {/* Contact Number */}
+            {/* Contact Number — first so lookup can auto-fill name */}
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Contact Number</label>
               <div className="relative">
@@ -211,6 +198,7 @@ export default function CheckoutPage() {
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   onBlur={handlePhoneBlur}
+                  autoFocus
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{ background: "var(--bg-input)", border: "1px solid var(--border)", color: "var(--text-primary)", paddingRight: lookingUp ? "2.5rem" : undefined }}
                 />
@@ -223,10 +211,35 @@ export default function CheckoutPage() {
               {customer && (
                 <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#166534" }}>
                   <span>✓</span>
-                  <span>Welcome back, <strong>{customer.name}</strong>! We found your account.</span>
-                  <button onClick={() => { setCustomer(null); setLookupDone(false); setName(""); }} className="ml-auto text-[10px] underline opacity-70">Not me</button>
+                  <span>Welcome back, <strong>{customer.name}</strong>! Your details are filled in.</span>
+                  <button onClick={() => { setCustomer(null); setLookupDone(false); setName(""); setNameEdited(false); }} className="ml-auto text-[10px] underline opacity-70">Not me</button>
                 </div>
               )}
+              {lookupDone && !customer && phone.replace(/\D/g, "").length >= 9 && (
+                <p className="mt-1.5 text-xs" style={{ color: "var(--text-muted)" }}>New customer — please enter your name below.</p>
+              )}
+            </div>
+
+            {/* Name — auto-filled if existing customer found */}
+            <div>
+              <label className="text-xs font-semibold mb-1.5 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                Full Name
+                {customer && !nameEdited && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>Auto-filled ✓</span>
+                )}
+              </label>
+              <input
+                type="text"
+                placeholder="Your full name"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setNameEdited(true); }}
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                style={{
+                  background: customer && !nameEdited ? "rgba(34,197,94,0.06)" : "var(--bg-input)",
+                  border: `1px solid ${customer && !nameEdited ? "rgba(34,197,94,0.3)" : "var(--border)"}`,
+                  color: "var(--text-primary)"
+                }}
+              />
             </div>
 
             {/* Additional Request */}
