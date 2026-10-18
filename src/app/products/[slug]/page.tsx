@@ -15,6 +15,7 @@ interface DbVariation {
   _id: string;
   label: string;
   price: number;
+  originalPrice?: number;
   stock: number;
   highlight?: boolean;
 }
@@ -80,6 +81,7 @@ async function getDbProduct(slug: string): Promise<DbProduct | null> {
         _id: v._id?.toString() ?? "",
         label: String(v.label ?? ""),
         price: Number(v.price ?? 0),
+        originalPrice: v.originalPrice != null ? Number(v.originalPrice) : undefined,
         stock: Number(v.stock ?? -1),
         highlight: Boolean(v.highlight),
       })),
@@ -170,11 +172,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const logoUrl = proxyImg(dbProduct.image) || staticProduct?.logoUrl;
 
   // Plans: prefer DB variations (live stock)
-  type Plan = { label: string; price: number; highlight?: boolean; variationId?: string; outOfStock?: boolean };
+  type Plan = { label: string; price: number; originalPrice?: number; highlight?: boolean; variationId?: string; outOfStock?: boolean };
   const plans: Plan[] = (dbProduct.variations && dbProduct.variations.length > 0)
     ? dbProduct.variations.map((v) => ({
         label: v.label,
         price: v.price,
+        originalPrice: v.originalPrice,
         highlight: v.highlight,
         variationId: v._id,
         outOfStock: v.stock === 0,
@@ -390,7 +393,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <div className="font-extrabold text-violet-600">Rs. {plan.price.toLocaleString()}</div>
-                        <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>Rs. {(plan.price * 5).toLocaleString()}</div>
+                        {plan.originalPrice && plan.originalPrice > plan.price && (
+                          <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>Rs. {plan.originalPrice.toLocaleString()}</div>
+                        )}
                       </div>
                       <AddToCartButton
                         productSlug={dbProduct.slug}
