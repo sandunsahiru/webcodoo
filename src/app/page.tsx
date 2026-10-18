@@ -197,28 +197,53 @@ export default function Home() {
           <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
             Get your subscription in minutes, not days
           </p>
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 relative">
-            {/* Connector line */}
-            <div className="absolute top-8 left-[16%] right-[16%] h-[2px] hidden sm:block" style={{ background: "linear-gradient(90deg, rgba(124,58,237,0.3), rgba(79,70,229,0.3))" }} />
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 relative">
+            {/* Connector line — sits at centre of icons */}
+            <div className="absolute left-[22%] right-[22%] h-[2px] hidden sm:block" style={{ top: "40px", background: "linear-gradient(90deg,rgba(124,58,237,0.25),rgba(79,70,229,0.25))" }} />
             {[
-              { step: "1", icon: "🛍️", title: "Pick a Product", desc: "Browse and choose the tool you need" },
-              { step: "2", icon: "💬", title: "Message Us", desc: "Tap 'Buy on WhatsApp' — no forms, no accounts" },
-              { step: "3", icon: "⚡", title: "Instant Access", desc: "We deliver your login details within minutes" },
+              {
+                step: "1", title: "Pick a Product", desc: "Browse and choose the tool you need",
+                svg: (
+                  <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+                  </svg>
+                ),
+              },
+              {
+                step: "2", title: "Place Your Order", desc: "Add to cart, enter your phone & pay",
+                svg: (
+                  <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13l-.4-2M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/>
+                  </svg>
+                ),
+              },
+              {
+                step: "3", title: "Instant Access", desc: "We deliver your login details within minutes",
+                svg: (
+                  <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                ),
+              },
             ].map((s) => (
-              <div key={s.step} className="flex flex-col items-center gap-2 relative z-10">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg mb-1"
-                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-                >
-                  {s.icon}
+              <div key={s.step} className="flex flex-col items-center text-center gap-3 relative z-10">
+                {/* Icon card with step badge */}
+                <div className="relative flex-shrink-0">
+                  <div
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-md"
+                    style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                  >
+                    {s.svg}
+                  </div>
+                  {/* Step badge — bottom-right corner of card */}
+                  <div
+                    className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                    style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
+                  >
+                    {s.step}
+                  </div>
                 </div>
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white -mt-3 ml-8"
-                  style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
-                >
-                  {s.step}
-                </div>
-                <div className="font-semibold text-xs sm:text-sm" style={{ color: "var(--text-primary)" }}>{s.title}</div>
+                <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{s.title}</div>
                 <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.desc}</div>
               </div>
             ))}
