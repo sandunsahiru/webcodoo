@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, products } from "@/lib/products";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AddToCartButton } from "@/components/AddToCartButton";
+import { CartNavButton } from "@/components/CartNavButton";
 
 const WA_NUMBER = "94702947854";
 
@@ -88,17 +90,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <CartNavButton />
             <ThemeToggle />
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1fb85a] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors"
+              className="hidden sm:flex items-center gap-2 bg-[#25D366] hover:bg-[#1fb85a] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors"
               style={{ boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}
             >
               <WaIconSm />
-              Buy Now
+              WhatsApp
             </a>
           </div>
         </div>
@@ -225,15 +228,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             >
               <h2 className="font-bold mb-4" style={{ color: "var(--text-primary)" }}>Choose a Plan</h2>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-5">
                 {product.plans.map((plan) => (
-                  <a
+                  <div
                     key={plan.label}
-                    href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
-                      `Hi! I want to order *${product.name}* – *${plan.label}* plan (Rs. ${plan.price.toLocaleString()}). Please assist.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="hover-plan flex items-center justify-between p-4 rounded-2xl"
                     style={
                       plan.highlight
@@ -254,24 +252,46 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         </span>
                       )}
                     </div>
-                    <div className="text-right">
-                      <div className="font-extrabold text-violet-600">Rs. {plan.price.toLocaleString()}</div>
-                      <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Tap to order →</div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="font-extrabold text-violet-600">Rs. {plan.price.toLocaleString()}</div>
+                        <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>Rs. {(plan.price * 5).toLocaleString()}</div>
+                      </div>
+                      <AddToCartButton
+                        productSlug={product.slug}
+                        productName={product.name}
+                        planLabel={plan.label}
+                        price={plan.price}
+                      />
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
 
-              {/* Main CTA */}
+              {/* Buy Now CTA */}
+              <AddToCartButton
+                productSlug={product.slug}
+                productName={product.name}
+                planLabel={product.plans[0].label}
+                price={product.plans[0].price}
+                variant="buynow"
+              />
+
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>or</span>
+                <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+              </div>
+
               <a
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full bg-[#25D366] hover:bg-[#1fb85a] text-white font-bold py-4 rounded-2xl text-base transition-colors"
-                style={{ boxShadow: "0 8px 24px rgba(37,211,102,0.3)" }}
+                className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1fb85a] text-white font-bold py-3 rounded-2xl text-sm transition-colors mt-3"
+                style={{ boxShadow: "0 6px 20px rgba(37,211,102,0.25)" }}
               >
                 <WaIconMd />
-                Buy Now on WhatsApp
+                Order via WhatsApp
               </a>
 
               <p className="text-center text-xs mt-3" style={{ color: "var(--text-muted)" }}>

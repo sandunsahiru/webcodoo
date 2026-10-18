@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { products } from "@/lib/products";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CartNavButton } from "@/components/CartNavButton";
+import { useCart } from "@/contexts/CartContext";
 
 const WA_NUMBER = "94702947854";
 const WA_LINK = `https://wa.me/${WA_NUMBER}`;
@@ -32,6 +34,7 @@ const WaIcon = () => (
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
+  const { addItem } = useCart();
 
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === "All" || p.category === activeCategory;
@@ -122,7 +125,8 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <CartNavButton />
             <ThemeToggle />
             <a
               href={WA_LINK}
@@ -399,31 +403,45 @@ export default function Home() {
                   {product.tagline}
                 </p>
 
-                {/* Price row */}
-                <div
-                  className="flex items-end justify-between pt-2 mt-auto"
-                  style={{ borderTop: "1px solid var(--border)" }}
-                >
-                  <div>
-                    <div className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>Starting from</div>
-                    <div className="flex items-baseline gap-1.5">
-                      <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
-                        Rs. {product.startingPrice.toLocaleString()}
+                {/* Price + cart row */}
+                <div className="pt-2 mt-auto" style={{ borderTop: "1px solid var(--border)" }}>
+                  <div className="flex items-end justify-between mb-2.5">
+                    <div>
+                      <div className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>Starting from</div>
+                      <div className="flex items-baseline gap-1.5">
+                        <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
+                          Rs. {product.startingPrice.toLocaleString()}
+                        </div>
+                        <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>
+                          Rs. {(product.startingPrice * 5).toLocaleString()}
+                        </div>
                       </div>
-                      <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>
-                        Rs. {(product.startingPrice * 5).toLocaleString()}
-                      </div>
+                      <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
                     </div>
-                    <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
+                    <Link
+                      href={`/products/${product.slug}`}
+                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all group-hover:scale-110"
+                      style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg className="w-3.5 h-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all group-hover:scale-110"
-                    style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addItem({ productSlug: product.slug, productName: product.name, planLabel: product.duration, price: product.startingPrice });
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#7c3aed" }}
                   >
-                    <svg className="w-3.5 h-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13l-.4-2M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
                     </svg>
-                  </div>
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </Link>

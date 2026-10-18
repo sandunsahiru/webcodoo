@@ -1,34 +1,23 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!
+const MONGODB_URI = process.env.MONGODB_URI!;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable')
+if (!MONGODB_URI) throw new Error("MONGODB_URI not set");
+
+// Re-use connection across hot reloads in dev
+const globalWithMongoose = global as typeof globalThis & { mongoose?: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } };
+
+if (!globalWithMongoose.mongoose) {
+  globalWithMongoose.mongoose = { conn: null, promise: null };
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null
-  promise: Promise<typeof mongoose> | null
-}
+const cached = globalWithMongoose.mongoose;
 
-declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: MongooseCache
-}
-
-const cached: MongooseCache = global.mongoose ?? { conn: null, promise: null }
-global.mongoose = cached
-
-export default async function connectDB() {
-  if (cached.conn) return cached.conn
-
+export async function connectDB() {
+  if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: 'webcodoo',
-      bufferCommands: false,
-    })
+    cached.promise = mongoose.connect(MONGODB_URI).then((m) => m);
   }
-
-  cached.conn = await cached.promise
-  return cached.conn
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
