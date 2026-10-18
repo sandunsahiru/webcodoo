@@ -35,7 +35,9 @@ interface DbProduct {
   icon?: string;
   badge?: string;
   color?: string;
-  variations?: { label: string; price: number; period?: number; periodUnit?: string; highlight?: boolean }[];
+  price?: number;
+  originalPrice?: number;
+  variations?: { label: string; price: number; originalPrice?: number; period?: number; periodUnit?: string; highlight?: boolean }[];
 }
 
 interface DisplayProduct {
@@ -46,6 +48,7 @@ interface DisplayProduct {
   logoUrl?: string;
   category: string;
   startingPrice: number;
+  originalPrice?: number;
   duration: string;
   badge?: string;
   color: string;
@@ -63,10 +66,12 @@ function buildDisplayProducts(dbProducts: DbProduct[]): DisplayProduct[] {
     const variations = db.variations ?? [];
     const priced = variations.filter((v) => v.price > 0).sort((a, b) => a.price - b.price);
     const lowest = priced[0];
-    const startingPrice = lowest?.price ?? stat?.startingPrice ?? 0;
+    const startingPrice = lowest?.price ?? db.price ?? stat?.startingPrice ?? 0;
     const duration = lowest
       ? lowest.label
       : stat?.duration ?? "";
+    // originalPrice: use the matched variation's originalPrice, or the product-level one
+    const originalPrice = lowest?.originalPrice ?? db.originalPrice;
     return {
       slug: db.slug,
       name: db.name,
@@ -75,6 +80,7 @@ function buildDisplayProducts(dbProducts: DbProduct[]): DisplayProduct[] {
       logoUrl: proxyImg(db.image) || stat?.logoUrl,
       category: db.category ?? stat?.category ?? "Other",
       startingPrice,
+      originalPrice: originalPrice && originalPrice > startingPrice ? originalPrice : undefined,
       duration,
       badge: db.badge ?? stat?.badge,
       color: db.color ?? stat?.color ?? "from-violet-500 to-purple-600",
@@ -514,9 +520,11 @@ export default function Home() {
                         <div className="text-base sm:text-lg font-extrabold" style={{ color: "var(--text-primary)" }}>
                           Rs. {product.startingPrice.toLocaleString()}
                         </div>
-                        <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>
-                          Rs. {(product.startingPrice * 5).toLocaleString()}
-                        </div>
+                        {product.originalPrice && (
+                          <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>
+                            Rs. {product.originalPrice.toLocaleString()}
+                          </div>
+                        )}
                       </div>
                       <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {product.duration}</div>
                     </div>
