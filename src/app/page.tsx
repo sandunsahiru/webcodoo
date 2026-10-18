@@ -30,6 +30,11 @@ interface DbProduct {
   name: string;
   description?: string;
   image?: string;
+  tagline?: string;
+  category?: string;
+  icon?: string;
+  badge?: string;
+  color?: string;
   variations?: { label: string; price: number; period?: number; periodUnit?: string; highlight?: boolean }[];
 }
 
@@ -46,6 +51,12 @@ interface DisplayProduct {
   color: string;
 }
 
+function proxyImg(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http://")) return `/api/image?url=${encodeURIComponent(url)}`;
+  return url;
+}
+
 function buildDisplayProducts(dbProducts: DbProduct[]): DisplayProduct[] {
   return dbProducts.map((db) => {
     const stat = staticProducts.find((p) => p.slug === db.slug);
@@ -59,14 +70,14 @@ function buildDisplayProducts(dbProducts: DbProduct[]): DisplayProduct[] {
     return {
       slug: db.slug,
       name: db.name,
-      tagline: stat?.tagline ?? (db.description ? db.description.slice(0, 80) : db.name),
-      icon: stat?.icon ?? "📦",
-      logoUrl: db.image || stat?.logoUrl,
-      category: stat?.category ?? "Other",
+      tagline: db.tagline ?? stat?.tagline ?? (db.description ? db.description.slice(0, 80) : db.name),
+      icon: db.icon ?? stat?.icon ?? "📦",
+      logoUrl: proxyImg(db.image) || stat?.logoUrl,
+      category: db.category ?? stat?.category ?? "Other",
       startingPrice,
       duration,
-      badge: stat?.badge,
-      color: stat?.color ?? "from-violet-500 to-purple-600",
+      badge: db.badge ?? stat?.badge,
+      color: db.color ?? stat?.color ?? "from-violet-500 to-purple-600",
     };
   });
 }

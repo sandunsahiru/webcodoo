@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, products } from "@/lib/products";
+import { getProduct, products as staticProducts } from "@/lib/products";
 import { connectDB } from "@/lib/mongodb";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AddToCartButton } from "@/components/AddToCartButton";
@@ -25,7 +25,31 @@ interface DbProduct {
   name: string;
   description?: string;
   image?: string;
+  tagline?: string;
+  category?: string;
+  icon?: string;
+  badge?: string;
+  color?: string;
+  accessMethod?: string;
+  features?: string[];
+  note?: string;
+  loginLink?: string;
   variations?: DbVariation[];
+}
+
+interface OtherProduct {
+  slug: string;
+  name: string;
+  image?: string;
+  icon?: string;
+  color?: string;
+  startingPrice: number;
+}
+
+function proxyImg(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://')) return `/api/image?url=${encodeURIComponent(url)}`;
+  return url;
 }
 
 async function getDbProduct(slug: string): Promise<DbProduct | null> {
@@ -43,6 +67,15 @@ async function getDbProduct(slug: string): Promise<DbProduct | null> {
       name: doc.name,
       description: doc.description,
       image: doc.image,
+      tagline: doc.tagline,
+      category: doc.category,
+      icon: doc.icon,
+      badge: doc.badge,
+      color: doc.color,
+      accessMethod: doc.accessMethod,
+      features: doc.features,
+      note: doc.note,
+      loginLink: doc.loginLink,
       variations: (doc.variations || []).map((v: Record<string, unknown>) => ({
         _id: v._id?.toString() ?? "",
         label: String(v.label ?? ""),
@@ -53,6 +86,35 @@ async function getDbProduct(slug: string): Promise<DbProduct | null> {
     };
   } catch {
     return null;
+  }
+}
+
+async function getOtherProducts(currentSlug: string): Promise<OtherProduct[]> {
+  try {
+    const conn = await connectDB();
+    const db = conn.connection.db!;
+    const docs = await db.collection("products").find({
+      slug: { $ne: currentSlug, $exists: true },
+      showOnWebsite: true,
+      isActive: { $ne: false },
+    }).limit(4).toArray();
+
+    return docs.map((doc) => {
+      const prices = (doc.variations || [])
+        .map((v: Record<string, unknown>) => Number(v.price ?? 0))
+        .filter((p: number) => p > 0);
+      const startingPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      return {
+        slug: doc.slug,
+        name: doc.name,
+        image: doc.image,
+        icon: doc.icon || "📦",
+        color: doc.color || "from-violet-500 to-purple-600",
+        startingPrice,
+      };
+    });
+  } catch {
+    return [];
   }
 }
 
@@ -70,45 +132,46 @@ const WaIconMd = () => (
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
-  if (!product) return {};
+  const dbProduct = await getDbProduct(slug);
+  const staticProduct = getProduct(slug);
+  if (!dbProduct && !staticProduct) return {};
+  const name = dbProduct?.name || staticProduct?.name || slug;
+  const description = dbProduct?.description || staticProduct?.description || "";
   return {
-    title: `${product.name} – Webcodoo`,
-    description: product.description,
+    title: `${name} – Webcodoo`,
+    description,
   };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  // Static product (display metadata: features, access method, etc.)
-  const staticProduct = getProduct(slug);
-
-  // DB product (live pricing + stock)
   const dbProduct = await getDbProduct(slug);
 
-  if (!staticProduct && !dbProduct) notFound();
+  // DB is source of truth — 404 if not in DB
+  if (!dbProduct) notFound();
 
-  // Merge: use static for display, DB for pricing/stock
-  const product = staticProduct ?? {
-    slug,
-    name: dbProduct!.name,
-    tagline: "",
-    icon: "📦",
-    logoUrl: dbProduct!.image,
-    category: "Digital",
-    startingPrice: dbProduct!.variations?.[0]?.price ?? 0,
-    duration: "Subscription",
-    color: "from-violet-600 to-purple-700",
-    description: dbProduct!.description ?? "",
-    accessMethod: "",
-    features: [],
-    plans: [],
-  };
+  // Static product used only as fallback for display data not yet filled in DB
+  const staticProduct = getProduct(slug);
 
-  // Plans: prefer DB variations (live stock), fall back to static plans
+  // Merge: DB first, static fallback for legacy products
+  const tagline = dbProduct.tagline || staticProduct?.tagline || "";
+  const category = dbProduct.category || staticProduct?.category || "Digital";
+  const icon = dbProduct.icon || staticProduct?.icon || "📦";
+  const badge = dbProduct.badge || staticProduct?.badge;
+  const color = dbProduct.color || staticProduct?.color || "from-violet-500 to-purple-600";
+  const description = dbProduct.description || staticProduct?.description || "";
+  const accessMethod = dbProduct.accessMethod || staticProduct?.accessMethod || "";
+  const features = (dbProduct.features && dbProduct.features.length > 0)
+    ? dbProduct.features
+    : (staticProduct?.features || []);
+  const note = dbProduct.note || staticProduct?.note;
+  const loginLink = dbProduct.loginLink || staticProduct?.loginLink;
+  const logoUrl = proxyImg(dbProduct.image) || staticProduct?.logoUrl;
+
+  // Plans: prefer DB variations (live stock)
   type Plan = { label: string; price: number; highlight?: boolean; variationId?: string; outOfStock?: boolean };
-  const plans: Plan[] = (dbProduct?.variations && dbProduct.variations.length > 0)
+  const plans: Plan[] = (dbProduct.variations && dbProduct.variations.length > 0)
     ? dbProduct.variations.map((v) => ({
         label: v.label,
         price: v.price,
@@ -118,11 +181,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       }))
     : (staticProduct?.plans ?? []).map((p) => ({ label: p.label, price: p.price, highlight: p.highlight }));
 
-  const productId = dbProduct?._id;
-  const logoUrl = dbProduct?.image ?? product.logoUrl;
+  const productId = dbProduct._id;
+
+  const otherProducts = await getOtherProducts(slug);
 
   const waMessage = encodeURIComponent(
-    `Hi! I want to order *${product.name}* from Webcodoo. Please provide details.`
+    `Hi! I want to order *${dbProduct.name}* from Webcodoo. Please provide details.`
   );
   const waLink = `https://wa.me/${WA_NUMBER}?text=${waMessage}`;
 
@@ -185,7 +249,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <span style={{ color: "var(--text-secondary)" }}>{product.name}</span>
+          <span style={{ color: "var(--text-secondary)" }}>{dbProduct.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -197,38 +261,42 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
             >
               <div className="flex items-start gap-5 mb-5">
-                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${product.color} flex items-center justify-center overflow-hidden shadow-xl flex-shrink-0 p-3`}>
+                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center overflow-hidden shadow-xl flex-shrink-0 p-3`}>
                   {logoUrl ? (
-                    <img src={logoUrl} alt={product.name} className="w-full h-full object-contain drop-shadow" />
+                    <img src={logoUrl} alt={dbProduct.name} className="w-full h-full object-contain drop-shadow" />
                   ) : (
-                    <span className="text-4xl">{product.icon}</span>
+                    <span className="text-4xl">{icon}</span>
                   )}
                 </div>
                 <div>
-                  {product.badge && (
+                  {badge && (
                     <span
                       className="inline-block text-white text-[10px] font-bold px-2.5 py-1 rounded-full mb-2"
                       style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)" }}
                     >
-                      {product.badge}
+                      {badge}
                     </span>
                   )}
                   <div className="text-xs font-semibold uppercase tracking-widest mb-1 text-violet-600">
-                    {product.category}
+                    {category}
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold" style={{ color: "var(--text-primary)" }}>
-                    {product.name}
+                    {dbProduct.name}
                   </h1>
-                  <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>{product.tagline}</p>
+                  {tagline && (
+                    <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>{tagline}</p>
+                  )}
                 </div>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {dbProduct?.description ?? product.description}
-              </p>
+              {description && (
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  {description}
+                </p>
+              )}
             </div>
 
             {/* Features */}
-            {product.features.length > 0 && (
+            {features.length > 0 && (
               <div
                 className="rounded-3xl p-6"
                 style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}
@@ -238,7 +306,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   What&apos;s Included
                 </h2>
                 <ul className="space-y-2.5">
-                  {product.features.map((f) => (
+                  {features.map((f) => (
                     <li key={f} className="flex items-start gap-3 text-sm" style={{ color: "var(--text-secondary)" }}>
                       <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
                         <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -253,7 +321,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )}
 
             {/* Access method */}
-            {product.accessMethod && (
+            {accessMethod && (
               <div
                 className="rounded-3xl p-6"
                 style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}
@@ -261,15 +329,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <span>🔑</span> How You Get Access
                 </h2>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{product.accessMethod}</p>
-                {product.loginLink && (
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{accessMethod}</p>
+                {loginLink && (
                   <a
-                    href={product.loginLink}
+                    href={loginLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 mt-3 text-blue-500 hover:text-blue-400 text-sm transition-colors"
                   >
-                    🌐 {product.loginLink}
+                    🌐 {loginLink}
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
@@ -279,13 +347,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )}
 
             {/* Note */}
-            {product.note && (
+            {note && (
               <div
                 className="rounded-3xl p-5 flex gap-3"
                 style={{ background: "rgba(234,179,8,0.05)", border: "1px solid rgba(234,179,8,0.15)" }}
               >
                 <span className="text-yellow-500 text-lg flex-shrink-0">⚠️</span>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{product.note}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{note}</p>
               </div>
             )}
           </div>
@@ -325,8 +393,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         <div className="text-[10px] line-through" style={{ color: "var(--text-muted)" }}>Rs. {(plan.price * 5).toLocaleString()}</div>
                       </div>
                       <AddToCartButton
-                        productSlug={product.slug}
-                        productName={product.name}
+                        productSlug={dbProduct.slug}
+                        productName={dbProduct.name}
                         planLabel={plan.label}
                         price={plan.price}
                         productId={productId}
@@ -338,7 +406,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 ))}
               </div>
 
-              {/* Buy Now CTA — use first available plan */}
+              {/* Buy Now CTA */}
               {(() => {
                 const firstAvailable = plans.find((p) => !p.outOfStock);
                 if (!firstAvailable) return (
@@ -348,8 +416,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 );
                 return (
                   <AddToCartButton
-                    productSlug={product.slug}
-                    productName={product.name}
+                    productSlug={dbProduct.slug}
+                    productName={dbProduct.name}
                     planLabel={firstAvailable.label}
                     price={firstAvailable.price}
                     productId={productId}
@@ -389,14 +457,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
 
-        {/* Other products */}
-        <div className="mt-16">
-          <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>Other Products</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {products
-              .filter((p) => p.slug !== product.slug)
-              .slice(0, 4)
-              .map((p) => (
+        {/* Other products — fully DB-driven */}
+        {otherProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>Other Products</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {otherProducts.map((p) => (
                 <Link
                   key={p.slug}
                   href={`/products/${p.slug}`}
@@ -406,8 +472,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <div className="relative w-10 h-10 mb-3 flex-shrink-0">
                     <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${p.color} blur-md opacity-50 scale-90`} />
                     <div className="relative w-full h-full rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center p-1.5">
-                      {p.logoUrl ? (
-                        <img src={p.logoUrl} alt={p.name} className="w-full h-full object-contain" />
+                      {p.image ? (
+                        <img src={proxyImg(p.image)} alt={p.name} className="w-full h-full object-contain" />
                       ) : (
                         <span className="text-lg">{p.icon}</span>
                       )}
@@ -417,12 +483,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     {p.name}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    Rs. {p.startingPrice.toLocaleString()}
+                    {p.startingPrice > 0 ? `Rs. ${p.startingPrice.toLocaleString()}` : "View plans"}
                   </div>
                 </Link>
               ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
