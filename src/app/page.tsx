@@ -2,16 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { products } from "@/lib/products";
+import { useState, useEffect } from "react";
+import { products as staticProducts } from "@/lib/products";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CartNavButton } from "@/components/CartNavButton";
 import { AddToCartButton } from "@/components/AddToCartButton";
 
 const WA_NUMBER = "94702947854";
 const WA_LINK = `https://wa.me/${WA_NUMBER}`;
-
-const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))];
 
 const categoryIcons: Record<string, string> = {
   All: "⚡",
@@ -23,7 +21,55 @@ const categoryIcons: Record<string, string> = {
   Academic: "📚",
   Education: "🎓",
   Productivity: "⚙️",
+  Other: "📦",
 };
+
+interface DbProduct {
+  _id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  image?: string;
+  variations?: { label: string; price: number; period?: number; periodUnit?: string; highlight?: boolean }[];
+}
+
+interface DisplayProduct {
+  slug: string;
+  name: string;
+  tagline: string;
+  icon: string;
+  logoUrl?: string;
+  category: string;
+  startingPrice: number;
+  duration: string;
+  badge?: string;
+  color: string;
+}
+
+function buildDisplayProducts(dbProducts: DbProduct[]): DisplayProduct[] {
+  return dbProducts.map((db) => {
+    const stat = staticProducts.find((p) => p.slug === db.slug);
+    const variations = db.variations ?? [];
+    const priced = variations.filter((v) => v.price > 0).sort((a, b) => a.price - b.price);
+    const lowest = priced[0];
+    const startingPrice = lowest?.price ?? stat?.startingPrice ?? 0;
+    const duration = lowest
+      ? lowest.label
+      : stat?.duration ?? "";
+    return {
+      slug: db.slug,
+      name: db.name,
+      tagline: stat?.tagline ?? (db.description ? db.description.slice(0, 80) : db.name),
+      icon: stat?.icon ?? "📦",
+      logoUrl: db.image || stat?.logoUrl,
+      category: stat?.category ?? "Other",
+      startingPrice,
+      duration,
+      badge: stat?.badge,
+      color: stat?.color ?? "from-violet-500 to-purple-600",
+    };
+  });
+}
 
 const WaIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -34,6 +80,23 @@ const WaIcon = () => (
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<DisplayProduct[]>(() => buildDisplayProducts(
+    staticProducts.map(p => ({ _id: p.slug, slug: p.slug, name: p.name, description: p.description, image: p.logoUrl, variations: p.plans.map(pl => ({ label: pl.label, price: pl.price })) }))
+  ));
+
+  useEffect(() => {
+    fetch("/api/products/public")
+      .then((r) => r.json())
+      .then((data: DbProduct[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(buildDisplayProducts(data));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))];
+
   const filtered = products.filter((p) => {
     const matchCat = activeCategory === "All" || p.category === activeCategory;
     const matchSearch =
