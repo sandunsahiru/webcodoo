@@ -11,6 +11,7 @@ export interface IOrder extends Document {
   orderId: string;
   phone: string;
   name: string;
+  notes?: string;
   items: IOrderItem[];
   total: number;
   status: "pending_payment" | "confirmed" | "delivered" | "cancelled";
@@ -30,6 +31,7 @@ const OrderSchema = new Schema<IOrder>(
     orderId: { type: String, unique: true },
     phone: { type: String, index: true },
     name: String,
+    notes: String,
     items: [OrderItemSchema],
     total: Number,
     status: { type: String, default: "pending_payment" },

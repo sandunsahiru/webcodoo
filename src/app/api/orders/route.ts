@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
-    const { phone, name, items, posCustomerId } = body;
+    const { phone, name, notes, items, posCustomerId } = body;
 
     if (!phone || !name || !items?.length) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const total = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * (i.qty ?? 1), 0);
     const orderId = genOrderId();
 
-    const order = await Order.create({ orderId, phone, name, items, total, posCustomerId, status: "pending_payment" });
+    const order = await Order.create({ orderId, phone, name, notes, items, total, posCustomerId, status: "pending_payment" });
 
     // Send Telegram notification
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -33,9 +33,10 @@ export async function POST(req: NextRequest) {
           `  • ${i.productName} - ${i.planLabel} × ${i.qty ?? 1} = Rs. ${(i.price * (i.qty ?? 1)).toLocaleString()}`)
         .join("\n");
 
+      const notesLine = notes ? `\n📝 Note: ${notes}` : "";
       const msg = `🛒 <b>NEW ORDER</b> #${orderId}\n\n` +
         `👤 ${name}\n📱 ${phone}\n💰 <b>Total: Rs. ${total.toLocaleString()}</b>\n\n` +
-        `📦 Items:\n${itemLines}\n\n` +
+        `📦 Items:\n${itemLines}${notesLine}\n\n` +
         `💳 Awaiting bank payment\n⏰ ${new Date().toLocaleString("en-LK", { timeZone: "Asia/Colombo" })}`;
 
       await sendTelegramMessage(chatId, msg).catch(console.error);
