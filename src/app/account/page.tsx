@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-type Step = "phone" | "password" | "create";
+type Step = "phone" | "otp" | "name";
 
 function normalizePhone(raw: string): string {
   const trimmed = raw.trim();
@@ -26,62 +26,77 @@ export default function AccountPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [existingName, setExistingName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const [resendTimer, setResendTimer] = useState(0);
+  const otpRef = useRef<HTMLInputElement>(null);
 
-  async function handlePhoneNext(e: React.FormEvent) {
+  // Resend countdown
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const t = setTimeout(() => setResendTimer(s => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendTimer]);
+
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     if (!phone.trim()) return;
     setError("");
     setLoading(true);
     try {
-      const normalized = normalizePhone(phone);
-      const res = await fetch(`/api/customers/lookup?phone=${encodeURIComponent(normalized)}`);
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizePhone(phone) }),
+      });
       const data = await res.json();
-      if (data.found) {
-        setExistingName(data.name || "");
-        if (data.hasPassword) {
-          setStep("password");
-        } else {
-          // POS customer without password — ask them to create one
-          setName(data.name || "");
-          setStep("create");
-        }
-      } else {
-        setStep("create");
-      }
+      if (!res.ok) { setError(data.error || "Failed to send code"); return; }
+      setStep("otp");
+      setResendTimer(60);
+      setTimeout(() => otpRef.current?.focus(), 100);
+      // Dev mode: pre-fill OTP if returned
+      if (data.dev) setOtp(data.dev);
     } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
-    setTimeout(() => passwordRef.current?.focus(), 100);
   }
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!password) return;
+  async function handleResend() {
+    if (resendTimer > 0) return;
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizePhone(phone), password }),
+        body: JSON.stringify({ phone: normalizePhone(phone) }),
+      });
+      setResendTimer(60);
+      setOtp("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent, withName?: string) {
+    e.preventDefault();
+    if (!otp.trim()) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizePhone(phone), otp: otp.trim(), name: withName ?? name }),
       });
       const data = await res.json();
       if (!res.ok) {
-        if (data.error === "no_password") {
-          setStep("create");
-        } else {
-          setError(data.error || "Login failed");
-        }
+        if (data.error === "name_required") { setStep("name"); setLoading(false); return; }
+        setError(data.error || "Verification failed");
         return;
       }
       router.push("/account/dashboard");
@@ -92,41 +107,10 @@ export default function AccountPage() {
     }
   }
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleSubmitName(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !password) return;
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizePhone(phone), name: name.trim(), password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.error?.includes("already exists")) {
-          setStep("password");
-          setError("Account already exists. Please login.");
-        } else {
-          setError(data.error || "Registration failed");
-        }
-        return;
-      }
-      router.push("/account/dashboard");
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    if (!name.trim()) return;
+    await handleVerifyOtp(e, name.trim());
   }
 
   const cardStyle: React.CSSProperties = {
@@ -146,7 +130,7 @@ export default function AccountPage() {
     outline: "none",
   };
 
-  const btnStyle: React.CSSProperties = {
+  const btnStyle = (disabled?: boolean): React.CSSProperties => ({
     background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
     color: "#fff",
     border: "none",
@@ -155,10 +139,10 @@ export default function AccountPage() {
     width: "100%",
     fontWeight: 700,
     fontSize: 15,
-    cursor: loading ? "not-allowed" : "pointer",
-    opacity: loading ? 0.7 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.7 : 1,
     transition: "opacity 0.2s",
-  };
+  });
 
   return (
     <div
@@ -199,27 +183,42 @@ export default function AccountPage() {
               className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
               style={{ background: "linear-gradient(135deg, #7c3aed22, #4f46e522)", border: "1px solid var(--border)" }}
             >
-              <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-              </svg>
+              {step === "phone" && (
+                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
+              )}
+              {step === "otp" && (
+                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="#25D366" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+              )}
+              {step === "name" && (
+                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
             </div>
             <h1 className="text-2xl font-bold mb-1">
               {step === "phone" && "My Account"}
-              {step === "password" && `Welcome back${existingName ? `, ${existingName.split(" ")[0]}` : ""}!`}
-              {step === "create" && (existingName ? "Create a Password" : "Create Account")}
+              {step === "otp" && "Enter Verification Code"}
+              {step === "name" && "What's your name?"}
             </h1>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               {step === "phone" && "Sign in or create your Webcodoo account"}
-              {step === "password" && "Enter your password to continue"}
-              {step === "create" && (existingName ? "Set a password to access your order history" : "Join Webcodoo to track your orders")}
+              {step === "otp" && (
+                <>We sent a 6-digit code to<br /><strong>{phone}</strong> via WhatsApp</>
+              )}
+              {step === "name" && "First time here — tell us your name to continue"}
             </p>
           </div>
 
           <div className="p-6 sm:p-8" style={cardStyle}>
-            {/* Phone step */}
+            {/* ── Step 1: Phone ── */}
             {step === "phone" && (
-              <form onSubmit={handlePhoneNext} className="space-y-4">
+              <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                     Phone Number
@@ -238,15 +237,23 @@ export default function AccountPage() {
                   </p>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" style={btnStyle} disabled={loading}>
-                  {loading ? "Checking..." : "Continue →"}
+                <button type="submit" style={btnStyle(loading || !phone.trim())} disabled={loading || !phone.trim()}>
+                  {loading ? "Sending code..." : "Send WhatsApp Code →"}
                 </button>
+
+                {/* WhatsApp hint */}
+                <p className="text-xs text-center" style={{ color: "var(--text-secondary)" }}>
+                  <svg className="w-3.5 h-3.5 inline mr-1 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  You&apos;ll receive a 6-digit code on WhatsApp
+                </p>
               </form>
             )}
 
-            {/* Login step */}
-            {step === "password" && (
-              <form onSubmit={handleLogin} className="space-y-4">
+            {/* ── Step 2: OTP ── */}
+            {step === "otp" && (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
                 {/* Phone chip */}
                 <div
                   className="flex items-center justify-between px-3 py-2 rounded-xl text-sm"
@@ -255,7 +262,7 @@ export default function AccountPage() {
                   <span style={{ color: "var(--text-secondary)" }}>{phone}</span>
                   <button
                     type="button"
-                    onClick={() => { setStep("phone"); setError(""); setPassword(""); }}
+                    onClick={() => { setStep("phone"); setError(""); setOtp(""); }}
                     className="text-violet-500 hover:text-violet-600 font-medium text-xs"
                   >
                     Change
@@ -264,135 +271,63 @@ export default function AccountPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    Password
+                    Verification Code
                   </label>
-                  <div className="relative">
-                    <input
-                      ref={passwordRef}
-                      type={showPw ? "text" : "password"}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      style={{ ...inputStyle, paddingRight: 44 }}
-                      autoFocus
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {showPw ? (
-                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
+                  <input
+                    ref={otpRef}
+                    type="text"
+                    inputMode="numeric"
+                    value={otp}
+                    onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="6-digit code"
+                    style={{ ...inputStyle, letterSpacing: "0.25em", fontSize: 22, textAlign: "center", fontWeight: 700 }}
+                    autoFocus
+                    maxLength={6}
+                    required
+                  />
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" style={btnStyle} disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In →"}
+                <button type="submit" style={btnStyle(loading || otp.length < 6)} disabled={loading || otp.length < 6}>
+                  {loading ? "Verifying..." : "Verify & Continue →"}
                 </button>
+
+                <p className="text-center text-sm" style={{ color: "var(--text-secondary)" }}>
+                  Didn&apos;t receive it?{" "}
+                  {resendTimer > 0 ? (
+                    <span>Resend in {resendTimer}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      className="text-violet-500 hover:text-violet-600 font-medium"
+                    >
+                      Resend code
+                    </button>
+                  )}
+                </p>
               </form>
             )}
 
-            {/* Create / Register step */}
-            {step === "create" && (
-              <form onSubmit={handleRegister} className="space-y-4">
-                {/* Phone chip */}
-                <div
-                  className="flex items-center justify-between px-3 py-2 rounded-xl text-sm"
-                  style={{ background: "var(--input-bg)", border: "1px solid var(--border)" }}
-                >
-                  <span style={{ color: "var(--text-secondary)" }}>{phone}</span>
-                  <button
-                    type="button"
-                    onClick={() => { setStep("phone"); setError(""); setPassword(""); setConfirmPassword(""); }}
-                    className="text-violet-500 hover:text-violet-600 font-medium text-xs"
-                  >
-                    Change
-                  </button>
-                </div>
-
-                {/* Name (hidden if existing POS customer already has a name) */}
+            {/* ── Step 3: Name (new users only) ── */}
+            {step === "name" && (
+              <form onSubmit={handleSubmitName} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    Name
+                    Your Name
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Your full name"
+                    placeholder="Enter your full name"
                     style={inputStyle}
-                    autoFocus={!existingName}
+                    autoFocus
                     required
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    {existingName ? "Create Password" : "Password"}
-                  </label>
-                  <div className="relative">
-                    <input
-                      ref={!existingName ? undefined : passwordRef}
-                      type={showPw ? "text" : "password"}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Min. 6 characters"
-                      style={{ ...inputStyle, paddingRight: 44 }}
-                      autoFocus={!!existingName}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {showPw ? (
-                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    Confirm Password
-                  </label>
-                  <input
-                    type={showPw ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
-                    style={inputStyle}
-                    required
-                  />
-                </div>
-
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" style={btnStyle} disabled={loading || !name.trim() || password.length < 6 || password !== confirmPassword}>
+                <button type="submit" style={btnStyle(loading || !name.trim())} disabled={loading || !name.trim()}>
                   {loading ? "Creating account..." : "Create Account →"}
                 </button>
               </form>
