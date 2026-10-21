@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, products as staticProducts } from "@/lib/products";
 import { connectDB } from "@/lib/mongodb";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AddToCartButton } from "@/components/AddToCartButton";
@@ -135,13 +134,10 @@ const WaIconMd = () => (
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const dbProduct = await getDbProduct(slug);
-  const staticProduct = getProduct(slug);
-  if (!dbProduct && !staticProduct) return {};
-  const name = dbProduct?.name || staticProduct?.name || slug;
-  const description = dbProduct?.description || staticProduct?.description || "";
+  if (!dbProduct) return {};
   return {
-    title: `${name} – Webcodoo`,
-    description,
+    title: `${dbProduct.name} – Webcodoo`,
+    description: dbProduct.description || "",
   };
 }
 
@@ -150,28 +146,22 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const dbProduct = await getDbProduct(slug);
 
-  // DB is source of truth — 404 if not in DB
+  // DB is the only source of truth
   if (!dbProduct) notFound();
 
-  // Static product used only as fallback for display data not yet filled in DB
-  const staticProduct = getProduct(slug);
+  const tagline = dbProduct.tagline || "";
+  const category = dbProduct.category || "Digital";
+  const icon = dbProduct.icon || "📦";
+  const badge = dbProduct.badge;
+  const color = dbProduct.color || "from-violet-500 to-purple-600";
+  const description = dbProduct.description || "";
+  const accessMethod = dbProduct.accessMethod || "";
+  const features = dbProduct.features || [];
+  const note = dbProduct.note;
+  const loginLink = dbProduct.loginLink;
+  const logoUrl = proxyImg(dbProduct.image);
 
-  // Merge: DB first, static fallback for legacy products
-  const tagline = dbProduct.tagline || staticProduct?.tagline || "";
-  const category = dbProduct.category || staticProduct?.category || "Digital";
-  const icon = dbProduct.icon || staticProduct?.icon || "📦";
-  const badge = dbProduct.badge || staticProduct?.badge;
-  const color = dbProduct.color || staticProduct?.color || "from-violet-500 to-purple-600";
-  const description = dbProduct.description || staticProduct?.description || "";
-  const accessMethod = dbProduct.accessMethod || staticProduct?.accessMethod || "";
-  const features = (dbProduct.features && dbProduct.features.length > 0)
-    ? dbProduct.features
-    : (staticProduct?.features || []);
-  const note = dbProduct.note || staticProduct?.note;
-  const loginLink = dbProduct.loginLink || staticProduct?.loginLink;
-  const logoUrl = proxyImg(dbProduct.image) || staticProduct?.logoUrl;
-
-  // Plans: prefer DB variations (live stock)
+  // Plans come exclusively from DB variations
   type Plan = { label: string; price: number; originalPrice?: number; highlight?: boolean; variationId?: string; outOfStock?: boolean };
   const plans: Plan[] = (dbProduct.variations && dbProduct.variations.length > 0)
     ? dbProduct.variations.map((v) => ({
@@ -182,7 +172,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         variationId: v._id,
         outOfStock: v.stock === 0,
       }))
-    : (staticProduct?.plans ?? []).map((p) => ({ label: p.label, price: p.price, highlight: p.highlight }));
+    : [];
 
   const productId = dbProduct._id;
 
